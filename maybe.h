@@ -4,6 +4,7 @@
 #include <utility> //move
 #include <type_traits> //decltype
 
+namespace cpplink {
 
 template <typename T>
 struct Maybe {
@@ -77,8 +78,19 @@ apply(Maybe<T> m, F&& f) {
     return Maybe<decltype(f(T()))>(); //nothing
 }
 
+template<typename T, typename F> // :: (m a) -> (a -> b) -> (m b)
+Maybe<typename std::result_of<F(T,T)>::type>
+apply(Maybe<T> m, Maybe<T> n, F&& f) {
+
+    if (m.isValid() && n.isValid()) {
+        return (std::forward<F>(f)(m.value, n.value)); //just
+    }
+
+    return Maybe<decltype(f(T(),T()))>(); //nothing
+}
 
 
+} //namespace cpplink
 
 
 
