@@ -14,8 +14,10 @@ This document describes all primitive modules available in CppLink.
 
 ## rand\<T\>
 
+- input pins(INT/REAL): `min(T)`, `max(T)`
 - output pins: `out(T)`
-- description: Returns a random value of type T
+- valid types for T: INT, REAL, BOOL
+- description: Returns a random value of type T. For numbers, the value falls within range [`min`,`max`]. If either value is unspecified, a respective INT_MIN/MAX is assumed in its place
 
 ## sin/cos
 
@@ -39,7 +41,7 @@ This document describes all primitive modules available in CppLink.
 
 - input pins: `period(REAL)`, `amplitude(REAL)`, `mid(REAL)`
 - output pins: `out(REAL)`
-- description: Generates a square wave with specified `amplitude` and `period` whose middle value between minimal and maximal is `mid`
+- description: Generates a square wave with specified `amplitude` and `period` whose middle value between minimal and maximal is `mid`. Returns `nothing` in case either `period` or `amplitude` is unspecified, but assumes 0 for an unspecified (invalid) `mid`
 
 # Helpers
 
@@ -57,11 +59,11 @@ This document describes all primitive modules available in CppLink.
 - valid types for T: INT, REAL, BOOL
 - description: Outputs the `in` value
 
-## clamp\<T, U\>
+## clamp\<T\>
 
-- input pins: `min(T)`, `max(T)`, `in(U)`
-- output pins: `out(U)`
-- valid types for T/U: INT, REAL
+- input pins: `min(T)`, `max(T)`, `in(T)`
+- output pins: `out(T)`
+- valid types for T: INT, REAL
 - description: Limits the output value to min and max bounds, suitable for restricting generators
 
 #Functions
@@ -105,19 +107,19 @@ This document describes all primitive modules available in CppLink.
 
 - input pins: `in1(BOOL)`, `in2(BOOL)`
 - output pins: `out(BOOL)`
-- description: Provide basic logic functions - and, or, implication, biconditional, xor, xnor, nand, nor
+- description: Provide basic logic functions - and, or, implication, xor, xnor, nand, nor
 
 ## relational operators \<T\>
 
-- input pins: `in(T)`, `val(T)`
+- input pins: `in1(T)`, `in2(T)`
 - output pins: `out(BOOL)`
 - valid types for T: INT, REAL
-- description: Tests the relation between `in` and `val` based on relational expression of the function: <=, <, >=, >, !=, ==
+- description: Tests the relation between `in1` and `in2` based on relational expression of the function: <=, <, >=, >, !=, ==
 
 ## inversion\<T\>
 
 - input pins: `in(T)`
-- output pins: `out(T)`
+- output pins: `out(REAL)`
 - description: Inverts the value on `in`, i.e. outputs 1/`in`
 
 ## neg\<T\>
@@ -155,7 +157,7 @@ This document describes all primitive modules available in CppLink.
 
 ## multiplexor\<T\>
 
-- input pins: `in1(T)` ... `in32(T)`, `state(INT)`
+- input pins: `array[32](T)`, `state(INT)`
 - output pins: `out(T)`
 - valid types for T: INT, REAL, BOOL
 - description: Allows the choice of up to 32 values to forward based on the `state` input

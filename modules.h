@@ -1,18 +1,20 @@
 #pragma once
 
 #include "maybe.h"
+#include "doubleequal.h"
+
 #include <vector>
+#include <array>
+#include <algorithm> //std::any_of
 #include <random>
 #include <ctime>
 #include <climits>
 #include <functional> //plus,minus..
+//#define _USE_MATH_DEFINES
+#include <cmath>
 
-# define PI       3.14159265358979323846
-# define EPSILON  0.00000000000001
 
 namespace cpplink {
-
-bool doubleEqual(double, double);
 
 
 template <typename T>
@@ -22,13 +24,27 @@ struct Pin {
     T& getValue() { return value.value; }
     void setValue(T v) { value = v; }
     bool isValid() { return value.isValid(); }
+
+    Pin& operator=(const Maybe<T>& m) {
+        value = m;
+        return *this;
+    }
+
+    Pin& operator=(Maybe<T>&& m) {
+        value = m;
+        return *this;
+    }
 };
 
 template <typename T>
-struct InputPin : public Pin<T> {};
+struct InputPin : public Pin<T> {
+    using Pin<T>::operator =;
+};
 
 template <typename T>
-struct OutputPin : public Pin<T> {};
+struct OutputPin : public Pin<T> {
+    using Pin<T>::operator =;
+};
 
 
 
@@ -61,7 +77,7 @@ template <typename T, T Val>
 struct ModuleConst {
 
     void step() {
-        out.value = Val;
+        out = Val;
     }
 
     OutputPin<T> out;
@@ -72,7 +88,7 @@ template <typename T>
 struct ModuleRand {
 
     void step() {
-        typedef typename std::conditional<std::is_same<T, int>::value,
+        typedef typename std::conditional<std::is_same<T, int64_t>::value,
                 std::uniform_int_distribution<int>,
                 std::uniform_real_distribution<double>>::type Type;
 
@@ -81,7 +97,7 @@ struct ModuleRand {
         Type distr(min_, max_);
 
         for (size_t i=0; i<3; i++) distr(gen);
-        out.value = distr(gen);
+        out = distr(gen);
     }
 
     InputPin<T> min;
@@ -92,13 +108,13 @@ private:
     std::default_random_engine gen{time(NULL)};
 };
 
-
-struct ModuleRandBool {
+template <>
+struct ModuleRand<bool> {
 
     void step() {
         std::uniform_int_distribution<int> distr(0, 1);
         for (size_t i=0; i<3; i++) distr(gen);
-        out.value = distr(gen);
+        out = distr(gen);
     }
 
     OutputPin<bool> out;
@@ -114,10 +130,10 @@ struct ModuleTrigo {
     void step() {
         if (!amplitude.isValid() || !period.isValid() || doubleEqual(period.getValue(), 0)) {
             x = 0;
-            out.value = Maybe<double>();
+            out = Maybe<double>();
         } else {
-            out.value = apply(amplitude.value, period.value,
-                              [&,this](double amp, double per){ return amp*F((2*PI*x)/per); });
+            out = apply(amplitude.value, period.value,
+                              [&,this](double amp, double per){ return amp*F((2*M_PI*x)/per); });
             x++;
         }
     }
@@ -139,11 +155,11 @@ struct ModuleTan {
     void step() {
         if (!period.isValid() || doubleEqual(period.getValue(),0)) {
             x = 0;
-            out.value = Maybe<double>();
+            out = Maybe<double>();
         } else {
-            out.value = period.value | [&,this](double per) -> Maybe<double> {
-                    if (doubleEqual(cos(x*PI/per),0)) return Maybe<double>();
-                        else return tan(x*(PI/per)); };
+            out = period.value | [&,this](double per) -> Maybe<double> {
+                    if (doubleEqual(cos(x*M_PI/per),0)) return Maybe<double>();
+                        else return tan(x*(M_PI/per)); };
             x++;
         }
     }
@@ -162,7 +178,7 @@ template <typename T, typename U>
 struct ModuleConvert {
 
     void step() {
-        out.value = in.value | [](T i)-> Maybe<U>{ return std::move(static_cast<U>(i)); };
+        out = in.value | [](T i)-> Maybe<U>{ return std::move(static_cast<U>(i)); };
     }
 
     InputPin<T> in;
@@ -182,12 +198,12 @@ struct ModuleIdentity {
 };
 
 
-template <typename T, typename U>
+template <typename T>
 struct ModuleClamp {
 
     void step() {
-        out.value = apply(min.value,max.value,[&,this](T min, T max) ->U {
-            U in_ = in.getValue();
+        out = apply(min.value, max.value, [&,this](T min, T max) ->T {
+            T in_ = in.getValue();
             in_ = in_ < min ? min : in_;
             return in_ > max ? max : in_;
         });
@@ -195,8 +211,8 @@ struct ModuleClamp {
 
     InputPin<T> min;
     InputPin<T> max;
-    InputPin<U> in;
-    OutputPin<U> out;
+    InputPin<T> in;
+    OutputPin<T> out;
 };
 
 
@@ -206,7 +222,7 @@ template <typename T, typename F>
 struct ModuleFunc {
 
     void step() {
-        out.value = apply(in1.value,in2.value,F());
+        out = apply(in1.value, in2.value, F());
     }
 
     InputPin<T> in1;
@@ -214,8 +230,9 @@ struct ModuleFunc {
     OutputPin<T> out;
 };
 
+
 template <typename T>
-using ModuleSum = ModuleFunc<T,std::plus<T>>;
+using ModuleSum = ModuleFunc<T, std::plus<T>>;
 
 template <typename T>
 using ModuleDiff = ModuleFunc<T, std::minus<T>>;
@@ -227,8 +244,8 @@ using ModuleMult = ModuleFunc<T, std::multiplies<T>>;
 template <typename T, typename F>
 struct ModuleFuncThrows {
 
-    using Type = double(*)(T,T);
-    Type func = [](T a, T b)->double{
+    using Type = T(*)(T,T);
+    Type func = [](T a, T b)->T{
             if (doubleEqual(b,0)) {
                 throw std::invalid_argument("Division by 0");
             } else {
@@ -237,12 +254,12 @@ struct ModuleFuncThrows {
         };
 
     void step() {
-        out.value = apply(in1.value,in2.value,func);
+        out = apply(in1.value, in2.value, func);
     }
 
     InputPin<T> in1;
     InputPin<T> in2;
-    OutputPin<double> out;
+    OutputPin<T> out;
 };
 
 template <typename T>
@@ -252,10 +269,205 @@ template <typename T>
 using ModuleMod = ModuleFuncThrows<T, std::modulus<T>>;
 
 
+// ## logical
 
-bool doubleEqual (double a, double b) {
-   return (a - b < EPSILON) && (b - a < EPSILON);
-}
+using ModuleLogicAnd = ModuleFunc<bool, std::logical_and<bool>>;
+using ModuleLogicOr  = ModuleFunc<bool, std::logical_or<bool>>;
+using ModuleLogicXor = ModuleFunc<bool, std::bit_xor<bool>>;
+
+
+
+template <typename F>
+struct ModuleLambda {
+    void step() {
+        out = apply(in1.value, in2.value, F());
+    }
+
+    InputPin<bool> in1;
+    InputPin<bool> in2;
+    OutputPin<bool> out;
+};
+
+struct FuncImpl {
+
+    bool operator()(bool a, bool b) {
+        return !(a && !b);
+    }
+};
+using ModuleLogicImpl = ModuleLambda<FuncImpl>;
+
+
+struct FuncXnor {
+
+    bool operator()(bool a, bool b) {
+        return (a == b);
+    }
+};
+using ModuleLogicXnor = ModuleLambda<FuncXnor>;
+
+
+struct FuncNand {
+
+    bool operator()(bool a, bool b) {
+        return (!a || !b);
+    }
+};
+using ModuleLogicNand = ModuleLambda<FuncNand>;
+
+
+struct FuncNor {
+
+    bool operator()(bool a, bool b) {
+        return (!a && !b);
+    }
+};
+using ModuleLogicNor = ModuleLambda<FuncNor>;
+
+
+// ## relational
+
+template <typename T>
+using ModuleLess = ModuleFunc<T, std::less<T>>;
+
+template <typename T>
+using ModuleLessEqual = ModuleFunc<T, std::less_equal<T>>;
+
+template <typename T>
+using ModuleGreater = ModuleFunc<T, std::greater<T>>;
+
+template <typename T>
+using ModuleGreaterEqual = ModuleFunc<T, std::greater_equal<T>>;
+
+template <typename T>
+using ModuleEqual = ModuleFunc<T, std::equal_to<T>>;
+
+template <typename T>
+using ModuleNotEqual = ModuleFunc<T, std::not_equal_to<T>>;
+
+
+template <typename T>
+struct ModuleInverse {
+
+    using Type = double(*)(double);
+    Type func = [](double a)-> double{
+            if (doubleEqual(a,0)) {
+                throw std::invalid_argument("Division by 0");
+            } else {
+                return 1/a;
+            }
+        };
+
+    void step() {
+        out = apply(in.value, func);
+    }
+
+    InputPin<T> in;
+    OutputPin<double> out;
+};
+
+template <typename T>
+struct ModuleNegate {
+    void step() {
+        out = apply(in.value, [](T& t){ return -t; });
+    }
+
+    InputPin<bool> in;
+    OutputPin<bool> out;
+};
+
+template <>
+struct ModuleNegate<bool> {
+    void step() {
+        out = apply(in.value, [](bool b){ return !b; });
+    }
+
+    InputPin<bool> in;
+    OutputPin<bool> out;
+};
+
+struct ModuleLog {
+
+    void step() {
+        out = apply(in.value, base.value, [](double val, double base)
+                    ->double{ return log(val)/log(base); });
+        if (std::isnan(out.getValue())) out = Maybe<double>();
+    }
+
+    InputPin<double> base;
+    InputPin<double> in;
+    OutputPin<double> out;
+};
+
+struct ModulePow {
+
+    void step() {
+        out = apply(base.value, exp.value, [](double b, double e)
+                    ->double{ return pow(b,e); });
+    }
+
+    InputPin<double> base;
+    InputPin<double> exp;
+    OutputPin<double> out;
+};
+
+struct ModuleSqrt {
+
+    void step() {
+        out = apply(in.value, [](double d)
+                    ->double{ return sqrt(d); });
+        if (std::isnan(out.getValue())) out = Maybe<double>();
+    }
+
+    InputPin<double> in;
+    OutputPin<double> out;
+};
+
+
+struct ModuleAvg {
+
+    void step() {
+        if (avgs.size()==10) avgs.erase(avgs.begin());
+        avgs.push_back(in.value);
+
+        if ( std::any_of(avgs.begin(), avgs.end(), [](Maybe<double> d){ return !d.isValid(); }) )
+            out = Maybe<double>();
+        else {
+            auto sum = std::accumulate(avgs.begin(), avgs.end(), Maybe<double>(0),
+                            [](Maybe<double>& m, Maybe<double>& n) {
+                                return apply(m, n, std::plus<double>()); } );
+            out = sum.value / avgs.size();
+        }
+
+    }
+
+    InputPin<double> in;
+    OutputPin<double> out;
+private:
+    std::vector<Maybe<double>> avgs;
+};
+
+
+template <typename T>
+struct ModuleMultiplexor {
+
+    void step() {
+        if (state.isValid() && inRange(state.getValue())) {
+            out = vals[state.getValue()].value;
+        } else {
+            out = Maybe<T>();
+        }
+    }
+
+    InputPin<int64_t> state;
+    OutputPin<T> out;
+    std::array<InputPin<T>, 32> vals;
+
+private:
+    bool inRange(int64_t i) {
+        return i <= 32 && i >= 0;
+    }
+};
+
 
 } //namespace cpplink
 
