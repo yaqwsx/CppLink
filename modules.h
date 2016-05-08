@@ -13,9 +13,7 @@
 //#define _USE_MATH_DEFINES
 #include <cmath>
 
-
 namespace cpplink {
-
 
 template <typename T>
 struct Pin {
@@ -70,11 +68,14 @@ private:
     OutputPin<T>* output;
 };
 
+struct Module {
+    virtual void step() = 0;
+};
 
 // ## Generators
 
 template <typename T, T Val>
-struct ModuleConst {
+struct ModuleConst : Module {
 
     void step() {
         out = Val;
@@ -85,7 +86,11 @@ struct ModuleConst {
 
 
 template <typename T>
-struct ModuleRand {
+struct ModuleRand : Module {
+
+    ModuleRand() {
+        gen = std::default_random_engine(time(NULL));
+    }
 
     void step() {
         typedef typename std::conditional<std::is_same<T, int64_t>::value,
@@ -105,11 +110,11 @@ struct ModuleRand {
     OutputPin<T> out;
 
 private:
-    std::default_random_engine gen{time(NULL)};
+    std::default_random_engine gen;
 };
 
 template <>
-struct ModuleRand<bool> {
+struct ModuleRand<bool> : Module {
 
     void step() {
         std::uniform_int_distribution<int> distr(0, 1);
@@ -125,7 +130,7 @@ private:
 
 
 template <double (*F)(double)>
-struct ModuleTrigo {
+struct ModuleTrigo : Module {
 
     void step() {
         if (!amplitude.isValid() || !period.isValid() || doubleEqual(period.getValue(), 0)) {
@@ -150,7 +155,7 @@ using ModuleSin = ModuleTrigo<sin>;
 using ModuleCos = ModuleTrigo<cos>;
 
 
-struct ModuleTan {
+struct ModuleTan : Module {
 
     void step() {
         if (!period.isValid() || doubleEqual(period.getValue(),0)) {
@@ -175,10 +180,10 @@ private:
 // ## Helpers
 
 template <typename T, typename U>
-struct ModuleConvert {
+struct ModuleConvert : Module {
 
     void step() {
-        out = in.value | [](T i)-> Maybe<U>{ return std::move(static_cast<U>(i)); };
+        out = in.value | [](T i)-> Maybe<U>{ return static_cast<U>(i); };
     }
 
     InputPin<T> in;
@@ -187,10 +192,10 @@ struct ModuleConvert {
 
 
 template <typename T>
-struct ModuleIdentity {
+struct ModuleIdentity : Module {
 
     void step() {
-        out.value = std::move(in.value);
+        out.value = in.value;
     }
 
     InputPin<T> in;
@@ -199,7 +204,7 @@ struct ModuleIdentity {
 
 
 template <typename T>
-struct ModuleClamp {
+struct ModuleClamp : Module {
 
     void step() {
         out = apply(min.value, max.value, [&,this](T min, T max) ->T {
@@ -219,7 +224,7 @@ struct ModuleClamp {
 // ## Functions
 
 template <typename T, typename F>
-struct ModuleFunc {
+struct ModuleFunc : Module {
 
     void step() {
         out = apply(in1.value, in2.value, F());
@@ -242,7 +247,7 @@ using ModuleMult = ModuleFunc<T, std::multiplies<T>>;
 
 
 template <typename T, typename F>
-struct ModuleFuncThrows {
+struct ModuleFuncThrows : Module {
 
     using Type = T(*)(T,T);
     Type func = [](T a, T b)->T{
@@ -278,7 +283,7 @@ using ModuleLogicXor = ModuleFunc<bool, std::bit_xor<bool>>;
 
 
 template <typename F>
-struct ModuleLambda {
+struct ModuleLambda : Module {
     void step() {
         out = apply(in1.value, in2.value, F());
     }
@@ -346,7 +351,7 @@ using ModuleNotEqual = ModuleFunc<T, std::not_equal_to<T>>;
 
 
 template <typename T>
-struct ModuleInverse {
+struct ModuleInverse : Module {
 
     using Type = double(*)(double);
     Type func = [](double a)-> double{
@@ -366,17 +371,17 @@ struct ModuleInverse {
 };
 
 template <typename T>
-struct ModuleNegate {
+struct ModuleNegate : Module {
     void step() {
         out = apply(in.value, [](T& t){ return -t; });
     }
 
-    InputPin<bool> in;
-    OutputPin<bool> out;
+    InputPin<T> in;
+    OutputPin<T> out;
 };
 
 template <>
-struct ModuleNegate<bool> {
+struct ModuleNegate<bool> : Module{
     void step() {
         out = apply(in.value, [](bool b){ return !b; });
     }
@@ -385,7 +390,7 @@ struct ModuleNegate<bool> {
     OutputPin<bool> out;
 };
 
-struct ModuleLog {
+struct ModuleLog : Module {
 
     void step() {
         out = apply(in.value, base.value, [](double val, double base)
@@ -398,7 +403,7 @@ struct ModuleLog {
     OutputPin<double> out;
 };
 
-struct ModulePow {
+struct ModulePow : Module {
 
     void step() {
         out = apply(base.value, exp.value, [](double b, double e)
@@ -410,7 +415,7 @@ struct ModulePow {
     OutputPin<double> out;
 };
 
-struct ModuleSqrt {
+struct ModuleSqrt : Module {
 
     void step() {
         out = apply(in.value, [](double d)
@@ -423,13 +428,14 @@ struct ModuleSqrt {
 };
 
 
-struct ModuleAvg {
+struct ModuleAvg : Module {
 
     void step() {
+
         if (avgs.size()==10) avgs.erase(avgs.begin());
         avgs.push_back(in.value);
 
-        if ( std::any_of(avgs.begin(), avgs.end(), [](Maybe<double> d){ return !d.isValid(); }) )
+        if ( avgs.size() == 0 || std::any_of(avgs.begin(), avgs.end(), [](Maybe<double> d){ return !d.isValid(); }) )
             out = Maybe<double>();
         else {
             auto sum = std::accumulate(avgs.begin(), avgs.end(), Maybe<double>(0),
@@ -448,7 +454,7 @@ private:
 
 
 template <typename T>
-struct ModuleMultiplexor {
+struct ModuleMultiplexor : Module {
 
     void step() {
         if (state.isValid() && inRange(state.getValue())) {
@@ -464,7 +470,7 @@ struct ModuleMultiplexor {
 
 private:
     bool inRange(int64_t i) {
-        return i <= 32 && i >= 0;
+        return i < 32 && i >= 0;
     }
 };
 

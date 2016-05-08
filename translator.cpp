@@ -27,6 +27,7 @@ parse_file(const std::vector<std::string>& file)
     for (const std::string line : file) {
         line_num++;
 
+        if (strip_comments(line).empty()) continue; //
         StatementUnion statement = parse_line(strip_comments(line));
         
         if (statement.is<std::string>()) {

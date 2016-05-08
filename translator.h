@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
+#include <set>
 #include <map>
 #include <ostream>
 #include <cstdint>
-#include "cpplink.h"
 #include "brick-types.h"
 
 
@@ -44,6 +44,8 @@ struct ModuleDeclaration {
             o << type << " ";
         o << ">\n";
     }
+
+    std::string generateCode() const;
 };
 
 struct NetPinCommand {
@@ -58,6 +60,8 @@ struct NetPinCommand {
         o << "NetPinCmd: " << module << "." << pin << (is_out ? " ->" : " <-") <<
             " " << net << "\n";
     }
+
+    std::string generateCode() const;
 };
 
 struct NetConstCommand {
@@ -95,6 +99,8 @@ struct ParsedFile {
         for (const auto& n : net_const)
             n.dump(o);
     }
+
+    std::string generateCode(std::vector<std::string> &mod, std::set<std::string> &net) const;
 };
 
 struct ParseError {

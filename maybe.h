@@ -56,9 +56,9 @@ private:
 
 
 template<typename T, typename F> //chaining
-auto operator|(Maybe<T> m, F&& f) { //>>= :: (m a) -> (a -> m b) -> (m b)      ||      (m a) -> (a -> b) -> (b)
+typename std::result_of<F(T)>::type operator|(Maybe<T> m, F&& f) { //>>= :: (m a) -> (a -> m b) -> (m b)      ||      (m a) -> (a -> b) -> (b)
 
-    using return_value = decltype(f(T()));
+    using return_value = typename std::result_of<F(T)>::type;
 
     if (m.isValid()) {
         return (std::forward<F>(f)(m.value)); //just
@@ -75,7 +75,7 @@ apply(Maybe<T> m, F&& f) {
         return (std::forward<F>(f)(m.value)); //just
     }
 
-    return Maybe<decltype(f(T()))>(); //nothing
+    return Maybe<typename std::result_of<F(T)>::type>(); //nothing
 }
 
 template<typename T, typename F> // :: (m a) -> (a -> b) -> (m b)
