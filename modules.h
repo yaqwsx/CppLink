@@ -45,9 +45,12 @@ struct OutputPin : public Pin<T> {
 };
 
 
+struct BaseNet{
+    virtual void step() = 0;
+};
 
 template <typename T>
-struct Net {
+struct Net : BaseNet {
 
     void addInputPin(InputPin<T>* in) {
         inputs.push_back(in);
@@ -68,22 +71,12 @@ private:
     OutputPin<T>* output;
 };
 
+
 struct Module {
     virtual void step() = 0;
 };
 
 // ## Generators
-
-template <typename T, T Val>
-struct ModuleConst : Module {
-
-    void step() {
-        out = Val;
-    }
-
-    OutputPin<T> out;
-};
-
 
 template <typename T>
 struct ModuleRand : Module {
@@ -138,13 +131,16 @@ struct ModuleTrigo : Module {
             out = Maybe<double>();
         } else {
             out = apply(amplitude.value, period.value,
-                              [&,this](double amp, double per){ return amp*F((2*M_PI*x)/per); });
+                              [&,this](double amp, double per){
+                double val = in.isValid()? in.getValue() : x;
+                return amp*F((2*M_PI*val)/per); });
             x++;
         }
     }
 
     InputPin<double> amplitude;
     InputPin<double> period;
+    InputPin<double> in;
     OutputPin<double> out;
 
 private:
@@ -174,6 +170,19 @@ struct ModuleTan : Module {
 
 private:
     double x = 0;
+};
+
+
+struct ModuleLinear : Module {
+
+    void step() {
+        out = x++;
+    }
+
+    OutputPin<int64_t> out;
+
+private:
+    int64_t x = 0;
 };
 
 
@@ -372,8 +381,9 @@ struct ModuleInverse : Module {
 
 template <typename T>
 struct ModuleNegate : Module {
+
     void step() {
-        out = apply(in.value, [](T& t){ return -t; });
+        out = apply(in.value, [](T t)->T{ return -t; });
     }
 
     InputPin<T> in;
@@ -382,8 +392,9 @@ struct ModuleNegate : Module {
 
 template <>
 struct ModuleNegate<bool> : Module{
+
     void step() {
-        out = apply(in.value, [](bool b){ return !b; });
+        out = apply(in.value, [](bool b)->bool{ return !b; });
     }
 
     InputPin<bool> in;
@@ -425,6 +436,19 @@ struct ModuleSqrt : Module {
 
     InputPin<double> in;
     OutputPin<double> out;
+};
+
+struct ModuleSignum : Module {
+
+    void step() {
+        out = apply(in.value, [](double d) ->int64_t{
+            if (doubleEqual(d,0)) return 0;
+            if (d<0) return -1;
+            return 1;});
+    }
+
+    InputPin<double> in;
+    OutputPin<int64_t> out;
 };
 
 

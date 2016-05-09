@@ -51,6 +51,7 @@ std::map<std::string, std::map<std::string, std::string>> modulePinTypes
 
 std::map<std::string, translator::ModuleDeclaration*> moduleDeclarations;
 
+/* Net -> const value */
 std::map<std::string, std::string> constDeclarations;
 
 

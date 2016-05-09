@@ -11,7 +11,7 @@ namespace cpplink {
 
 using namespace translator;
 
-std::map<string, string> _types{{"DOUBLE", "double"}, {"INT", "int64_t"}, {"BOOL", "bool"}};
+std::map<string, string> _types{{"REAL", "double"}, {"INT", "int64_t"}, {"BOOL", "bool"}};
 
 
 string generateHeaders() {

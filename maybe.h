@@ -1,5 +1,5 @@
 #pragma once
-//-std=c++1y
+//-std=c++11
 
 #include <utility> //move
 #include <type_traits> //decltype

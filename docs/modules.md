@@ -21,9 +21,10 @@ This document describes all primitive modules available in CppLink.
 
 ## sin/cos
 
-- input pins: `amplitude(REAL)`, `period(REAL)`
+- input pins: `amplitude(REAL)`, `period(REAL)`, `in(REAL)`
 - output pins: `out(REAL)`
 - description: Generates a sine/cosine wave that adheres to the `amplitude` and `period` provided on input. If either is `nothing`, produces `nothing` and returns to original position
+`in` input pin serves for simple sin/cos computation of a single value
 
 ## tan
 
@@ -31,17 +32,17 @@ This document describes all primitive modules available in CppLink.
 - output pins: `out(REAL)`
 - description: Generates a tangent wave with specified `period`
 
+## linear
+
+- output pins: `out(INT)`
+- description: Produces an increasing integer value in linear fashion (i.e. 0,1,2..)
+
 ## triangle/saw
 
 - input pins: `amplitude(REAL)`, `period(REAL)`
 - output pins: `out(REAL)`
 - description: Generates a triangle/saw wave with specified `amplitude` and `period`
 
-## square
-
-- input pins: `period(REAL)`, `amplitude(REAL)`, `mid(REAL)`
-- output pins: `out(REAL)`
-- description: Generates a square wave with specified `amplitude` and `period` whose middle value between minimal and maximal is `mid`. Returns `nothing` in case either `period` or `amplitude` is unspecified, but assumes 0 for an unspecified (invalid) `mid`
 
 # Helpers
 
@@ -148,6 +149,11 @@ This document describes all primitive modules available in CppLink.
 - output pins: `out(REAL)`
 - description: Outputs the square root of `in`
 
+## signum
+
+- input pins: `in(REAL)`
+- output pins: `out(INT)`
+- description: Returns the signum of the `in` value, -1 for a negative input, 1 for a positive input, 0 for zero
 
 ## avg
 
