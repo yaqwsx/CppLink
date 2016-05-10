@@ -1,5 +1,5 @@
 %{
-#include "parser_inc.h"
+#include "parsers/parser_inc.h"
 
 extern int yylex();
 static void yyerror(StatementUnion& u, const char *s) { u = std::string(s); }
@@ -17,8 +17,6 @@ static void yyerror(StatementUnion& u, const char *s) { u = std::string(s); }
     cpplink::translator::NetConstCommand*   net_const;
     int                                     token;
 }
-
-%error-verbose
 
 %type <int_constant>   int_constant
 %type <real_constant>  real_constant

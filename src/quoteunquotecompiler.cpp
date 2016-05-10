@@ -37,7 +37,7 @@ string itos(T d) {
 
 string getPinType(string moduleName, string pinName) {
     std::vector<string> types{"double","int64_t","bool"};
-    ModuleDeclaration* m = moduleDeclarations[moduleName];
+    const ModuleDeclaration* m = moduleDeclarations[moduleName];
     string potential = modulePinTypes[m->type][pinName];
 
     if(std::find(types.begin(), types.end(), potential) != types.end()) {
@@ -100,7 +100,7 @@ string ParsedFile::generateCode(std::vector<string>& mods, std::set<string>& net
         for (const auto& d : declarations) {
             res += d.generateCode();
             mods.push_back(d.name);
-            moduleDeclarations.insert(std::pair<string,ModuleDeclaration*>(d.name,&d));
+            moduleDeclarations.insert({d.name, &d});
         }
         res += "\n";
 
@@ -142,8 +142,6 @@ string ParsedFile::generateCode(std::vector<string>& mods, std::set<string>& net
 
 using namespace cpplink;
 
-#if 1
-
 int main(int argc, char* argv[]) {
 
     std::ifstream file;
@@ -162,5 +160,3 @@ int main(int argc, char* argv[]) {
             << res.right().generateCode(modules, nets) << tabs(1) << "return 0;\n" << "}\n";
 
 }
-
-#endif

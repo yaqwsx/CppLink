@@ -1,5 +1,5 @@
 #include "translator.h"
-#include "parser_inc.h"
+#include "parsers/parser_inc.h"
 
 #include <cassert>
 

@@ -1,6 +1,6 @@
 %{
 #include <string>
-#include "parser_inc.h"
+#include "parsers/parser_inc.h"
 #include "parser.hpp"
 
 
@@ -10,6 +10,8 @@
 
 %option noyywrap
 %option never-interactive
+%option noinput
+%option nounput
 
 %%
 

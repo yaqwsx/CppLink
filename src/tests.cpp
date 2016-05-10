@@ -1,8 +1,6 @@
-#if 0
-
-#include "modules.h"
+#include "cpplink_lib/modules.h"
 #define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include <catch.hpp>
 #include <string>
 #include <typeinfo>
 #include <type_traits>
@@ -409,5 +407,3 @@ TEST_CASE("modules") {
     }
 }
 
-
-#endif

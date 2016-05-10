@@ -49,7 +49,7 @@ std::map<std::string, std::map<std::string, std::string>> modulePinTypes
 /* Stores declared modules in the form "name" -> "ModuleDeclaration"
    for deduction of net types where the modules are wired */
 
-std::map<std::string, translator::ModuleDeclaration*> moduleDeclarations;
+std::map<std::string, const translator::ModuleDeclaration*> moduleDeclarations;
 
 /* Net -> const value */
 std::map<std::string, std::string> constDeclarations;

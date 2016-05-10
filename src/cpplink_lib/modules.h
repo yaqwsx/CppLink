@@ -118,7 +118,7 @@ struct ModuleRand<bool> : Module {
     OutputPin<bool> out;
 
 private:
-    std::default_random_engine gen{time(NULL)};
+    std::default_random_engine gen{static_cast<unsigned long>(time(NULL))};
 };
 
 
