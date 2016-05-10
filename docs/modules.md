@@ -6,12 +6,6 @@ This document describes all primitive modules available in CppLink.
 
 # Generators
 
-## const\<T, Val\>
-
-- output pins: `out(T)`
-- valid types for T: INT, REAL, BOOL
-- description: Produces constant Val of type T at the `out` pin
-
 ## rand\<T\>
 
 - input pins(INT/REAL): `min(T)`, `max(T)`

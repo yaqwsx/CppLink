@@ -1,5 +1,4 @@
-#ifndef DOUBLEEQUAL
-#define DOUBLEEQUAL
+#pragma once
 
 #include <cstring> //size_t
 #include <limits> //numeric_limits
@@ -267,11 +266,10 @@ class FloatingPoint {
 };
 
 
-bool doubleEqual (double a, double b) {
+inline bool doubleEqual (double a, double b) {
     const FloatingPoint<double> left(a), right(b);
     return (left.AlmostEquals(right));
 }
 
 
-#endif // DOUBLEEQUAL
 
