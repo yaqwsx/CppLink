@@ -4,8 +4,17 @@
 #include <map>
 #include <ostream>
 #include <cstdint>
-#include "brick-types.h"
 
+#include <brick-types.h>
+
+namespace std {
+// Define operator<< for types with dump method
+template <class T>
+auto operator<<(std::ostream& o, const T& t) -> decltype(t.dump(o), std::declval<std::ostream&>())  {
+	t.dump(o);
+	return o;
+}
+}
 
 namespace cpplink { namespace translator {
 

@@ -2,11 +2,31 @@
 #include "parsers/parser_inc.h"
 
 #include <cassert>
+#include <cctype>
+#include <algorithm>
 
 namespace cpplink { namespace translator {
 
+std::string ltrim(std::string s) {
+	auto end = std::find_if(s.begin(), s.end(),
+        [] (char c) { return !std::isspace(c); });
+	s.erase(s.begin(), end);
+	return s;
+}
+
+std::string rtrim(std::string s) {
+	auto begin = std::find_if(s.rbegin(), s.rend(),
+        [] (char c) { return !std::isspace(c); });
+	s.erase(begin.base(), s.end());
+	return s;
+}
+
+std::string trim(std::string s) {
+	return ltrim(rtrim(s));
+}
+
 std::string strip_comments(const std::string& s) {
-    return s.substr(0, s.find('#'));
+    return trim(s.substr(0, s.find('#')));
 }
 
 std::vector<std::string> read_file(std::istream& input) {
@@ -27,8 +47,10 @@ parse_file(const std::vector<std::string>& file)
     for (const std::string line : file) {
         line_num++;
 
-        if (strip_comments(line).empty()) continue; //
-        StatementUnion statement = parse_line(strip_comments(line));
+	    std::string stripped_line = strip_comments(line);
+        if (stripped_line.empty())
+            continue;
+	    StatementUnion statement = parse_line(stripped_line);
         
         if (statement.is<std::string>()) {
             errors.push_back({ statement.get<std::string>(), line_num });
