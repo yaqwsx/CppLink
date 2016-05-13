@@ -31,7 +31,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
 
 # Setup binaries
 add_executable(cpplink src/quoteunquotecompiler.cpp ${BIN_SOURCES}
-	${BISON_PARSER_OUTPUTS} ${FLEX_SCANNER_OUTPUTS})
+	${BISON_PARSER_OUTPUTS} ${FLEX_SCANNER_OUTPUTS} libs/docopt/docopt.cpp)
 add_executable(tests src/tests.cpp ${BIN_SOURCES} ${TEST_SOURCES}
     ${BISON_PARSER_OUTPUTS} ${FLEX_SCANNER_OUTPUTS})
 

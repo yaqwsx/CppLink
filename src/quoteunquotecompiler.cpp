@@ -4,8 +4,25 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <docopt/docopt.h>
 
 using std::string;
+
+static const char USAGE[] =
+R"(CppLink.
+
+Usage:
+    cpplink <input_file> <output_file> [--interface --watch --steps]
+    cpplink -h | --help
+    cpplink --version
+
+Options:
+    -h --help     Show help.
+    --version     Show version.
+    --interface   Specifies output interface of produces code: silent, csv or plan
+    --watch       Comma separated list with net names, which will be watched
+    --steps       Number of iterations
+)";
 
 namespace cpplink {
 
@@ -144,8 +161,13 @@ using namespace cpplink;
 
 int main(int argc, char* argv[]) {
 
-    std::ifstream file;
-    file.open ("in.txt", std::ifstream::in);
+	std::map<std::string, docopt::value> args = docopt::docopt(USAGE, 
+		{ argv + 1, argv + argc },
+		true,
+		"CppLink 0.1");
+
+    std::ifstream file(args["<input_file>"].asString());
+    // ToDo: Check if file is open
 
     std::vector<string> vecs = translator::read_file(file);
     auto res = translator::parse_file(vecs);
@@ -153,8 +175,8 @@ int main(int argc, char* argv[]) {
     std::vector<string> modules;
     std::set<string> nets;
 
-    std::ofstream fileout;
-    fileout.open ("..\\cpplink\\out.cpp", std::ifstream::out);
+    std::ofstream fileout(args["<output_file>"].asString());
+    // ToDo: Check if file open
 
     fileout << generateHeaders() << "int main(int argc, char* argv[]){\n"
             << res.right().generateCode(modules, nets) << tabs(1) << "return 0;\n" << "}\n";
