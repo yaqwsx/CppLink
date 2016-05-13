@@ -268,6 +268,9 @@ struct Maybe : Comparable
             _v.t = m._v.t;
     }
 
+	Maybe()
+		: _nothing(true) {}
+
     ~Maybe() {
         if ( !_nothing )
             _v.t.~StorableRef< T >();
@@ -284,7 +287,6 @@ struct Maybe : Comparable
 protected:
 
     Maybe( const T &v ) : _v( v ), _nothing( false ) {}
-    Maybe() : _nothing( true ) {}
     struct Empty {
         char x[ sizeof( T ) ];
     };

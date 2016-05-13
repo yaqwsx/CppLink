@@ -21,6 +21,11 @@
 ","                     return TOKEN(SEP);
 "."                     return TOKEN(TDOT);
 "net"                   return TOKEN(TNET);
+"using"                 return TOKEN(TUSING);
+"generic"               return TOKEN(TGENERIC);
+"blackbox"              return TOKEN(TBLACKBOX);
+"in"                    return TOKEN(TIN_WORD);
+"out"                   return TOKEN(TOUT_WORD);
 "->"                    return TOKEN(TOUT);
 "<-"                    return TOKEN(TIN);
 "true"                  return TOKEN(TTRUE);

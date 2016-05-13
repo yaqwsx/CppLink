@@ -52,21 +52,47 @@ parse_file(const std::vector<std::string>& file)
             continue;
 	    StatementUnion statement = parse_line(stripped_line);
         
-        if (statement.is<std::string>()) {
-            errors.push_back({ statement.get<std::string>(), line_num });
+	    if (statement.is<std::string>()) {
+		    errors.push_back({ statement.get<std::string>(), line_num });
+	    }
+	    else if (statement.is<ModuleDeclaration>()) {
+		    result.declarations.push_back(add_line_num(
+		        statement.get<ModuleDeclaration>(),
+			    line_num));
+	    }
+	    else if (statement.is<NetPinCommand>()) {
+		    result.net_pin.push_back(add_line_num(
+		        statement.get<NetPinCommand>(),
+			    line_num));
+	    }
+	    else if (statement.is<NetConstCommand>()) {
+		    result.net_const.push_back(add_line_num(
+		        statement.get<NetConstCommand>(),
+			    line_num));
+	    }
+	    else if (statement.is<BlackboxCommand>()) {
+		    if (result.blackbox_def) {
+			    errors.push_back({
+                     "Redefinition of blackbox steps! See line "
+                     + std::to_string(result.blackbox_def.value().line)
+                     + " for previous declaration", line_num
+                     });
+		    }
+            else {
+	            result.blackbox_def = brick::types::Maybe<BlackboxCommand>::Just(
+                    add_line_num(statement.get<BlackboxCommand>(), line_num));
+            }
         }
-        else if (statement.is<ModuleDeclaration>()) {
-            result.declarations.push_back(add_line_num(
-                statement.get<ModuleDeclaration>(), line_num));
-        }
-        else if (statement.is<NetPinCommand>()) {
-            result.net_pin.push_back(add_line_num(
-                statement.get<NetPinCommand>(), line_num));
-        }
-        else if (statement.is<NetConstCommand>()) {
-            result.net_const.push_back(add_line_num(
-                statement.get<NetConstCommand>(), line_num));
-        }
+	    else if (statement.is<IoPinDeclaration>()) {
+		    result.io_pins.push_back(add_line_num(
+                statement.get<IoPinDeclaration>(),
+                line_num));
+	    }
+	    else if (statement.is<GenericDeclaration>()) {
+		    result.generics.push_back(add_line_num(
+                statement.get<GenericDeclaration>(),
+                line_num));
+	    }
         else {
             assert(false && "Unknown type in union!");
         }
