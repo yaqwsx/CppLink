@@ -6,6 +6,7 @@
 #include <docopt/docopt.h>
 
 #include "quoteunquotecompiler.h"
+#include "typechecker.h"
 #include <cpplink_const_lib.h>
 
 using std::string;
@@ -72,15 +73,17 @@ string itos(T d) {
     return strs.str();
 }
 
-string getPinType(string moduleName, string pinName) {
-    std::vector<string> types{"double","int64_t","bool"};
-    const ModuleDeclaration* m = moduleDeclarations[moduleName];
-    string potential = modulePinTypes[m->type][pinName];
+string getPinType(DeclarationsMap& modules, string moduleName, string pinName) {
+    std::vector<DataType> types{Int, Real, Bool};
 
-    if(std::find(types.begin(), types.end(), potential) != types.end()) {
-        return potential;
+    const ModuleDeclaration* m = modules[moduleName];
+    Pin pin = moduleInfo[m->type].pins[pinName];
+    DataType type = pin.type;
+
+    if(std::find(types.begin(), types.end(), type) != types.end()) {
+        return DataTypeToString[static_cast<unsigned>(type)];
     }
-    return _types[m->template_args[std::stoi(potential)-1]];
+    return typeToStr[m->template_args[pin.pos - 1]];
 }
 
 string generateSystemSteps(std::vector<string>& mods, std::set<string>& nets) {
@@ -105,7 +108,7 @@ string generateNetDeclaration(string name, string type) {
 }
 
 string generateConstWiring(const NetPinCommand& n) {
-    return tabs(1) + n.module + "." + n.pin + " = " + constDeclarations[n.net] + ";\n";
+    return tabs(1) + n.module + "." + n.pin + " = " + constDeclarations[n.net].second + ";\n";
 }
 
 string ModuleDeclaration::generateCode() const {
@@ -115,7 +118,7 @@ string ModuleDeclaration::generateCode() const {
     if (argsize) {
         res += "< ";
         for(unsigned i=0; i<argsize; i++) {
-            res += _types.find(template_args[i])->second;
+            res += typeToStr.find(template_args[i])->second;
             if (i<argsize-1) res += ", ";
         }
         res += " >";
@@ -131,53 +134,34 @@ string NetPinCommand::generateCode() const {
     return res;
 }
 
-string ParsedFile::generateCode(std::vector<string>& mods, std::set<string>& nets) const {
+string ParsedFile::generateCode(DeclarationsMap& modules, std::set<string>& nets) const {
         std::string res;
 
         for (const auto& d : declarations) {
             res += d.generateCode();
-            mods.push_back(d.name);
-            moduleDeclarations.insert({d.name, &d});
         }
         res += "\n";
-
-        for (const auto& n : net_const) {
-            string val;
-
-            if (n.parameter.is<bool>()) {
-                val  = (n.parameter.get<bool>() ? "true" : "false");
-            }
-            else if (n.parameter.is<int64_t>()) {
-                val  = itos<int>(n.parameter.get<int64_t>());
-            }
-            else {
-                val = itos<double>(n.parameter.get<double>());
-            }
-
-            nets.insert(n.net);
-            constDeclarations.insert({n.net, val});
-        }
 
         for (const auto& n : net_pin) {
             if (constDeclarations.find(n.net) != constDeclarations.end()) {
                 res += generateConstWiring(n);
             } else {
                 if (nets.find(n.net) == nets.end()) {
-                    res += generateNetDeclaration(n.net, getPinType(n.module, n.pin));
+                    res += generateNetDeclaration(n.net, getPinType(modules, n.module, n.pin));
                 }
                 res += n.generateCode();
             }
             nets.insert(n.net);
         }
         res += "\n";
-
-        return res + generateSystemSteps(mods, nets);
+        return res;
+        //return res + generateSystemSteps(mods, nets);
 }
 
 void print_error_messages(std::ostream& o, std::vector<translator::ParseError>& errors,
 		std::vector<string>& source)
 {
-	std::cerr << errors.size() <<  " translation errors occured!\n";
+	std::cerr << errors.size() <<  " translation errors occurred!\n";
 	for (const translator::ParseError& e : errors) {
 		std::cerr << "On line " << e.line << ": " << e.message << "\n";
 		std::cerr << "   line: " << source[e.line - 1] << "\n";
@@ -225,15 +209,29 @@ int main(int argc, char* argv[]) {
 		return 1;
 	}
 
-    std::vector<string> modules;
+    DeclarationsMap modules; //"name" -> ModuleDeclaration
     std::set<string> nets;
-    fileout << generateHeaders(embed_lib) << "int main(int argc, char* argv[]){\n"
-            << res.right().generateCode(modules, nets) << tabs(1) << "return 0;\n" << "}\n";
-	
-    if (!fileout.good()) {
-		std::cerr << "Cannot write to output file " << out_file << "!\n";
-		return 1;
-	}
+    
+    ParsedFile parsedFile = res.right();
+    auto errors = typeCheck(parsedFile, modules);
+    
+    if (!errors.empty()) {
+        std::cout << "Could not produce .cpp file, following errors occurred:\n\n";
+        std::sort(errors.begin(), errors.end(), [](ParseError& a, ParseError& b){ return a.line < b.line; });
+        for (auto er : errors) {
+            std::cout << er.line << " : " << er.message << '\n';
+        }
+
+    } else {
+		
+        fileout << generateHeaders(embed_lib) << "int main(int argc, char* argv[]){\n"
+                << res.right().generateCode(modules, nets) << tabs(1) << "return 0;\n" << "}\n";
+                
+        if (!fileout.good()) {
+		    std::cerr << "Cannot write to output file " << out_file << "!\n";
+		    return 1;
+	    }
+    }    
     
 	return 0;
 }

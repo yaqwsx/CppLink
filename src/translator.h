@@ -21,23 +21,46 @@ namespace cpplink { namespace translator {
 enum DataType {Int = 0, Real = 1, Bool = 2, Template = 3}; 
 enum class Direction {In, Out};
 
+const std::vector<std::string> DataTypeToString{"int64_t","double","bool"};
+
 struct Pin {
+
+    Pin(){}
+
+    Pin(DataType typ, Direction d, unsigned pos=0)
+        :
+          type(typ),
+          dir(d),
+          pos(pos)
+    {}
+
     DataType type;
     Direction dir;
-    std::string name;
+    unsigned pos;
 };
 
 struct PrimitiveModule {
+
+    PrimitiveModule(){}
+
+    PrimitiveModule(unsigned count,
+                    std::vector<std::vector<DataType>> allowed,
+                    std::map<std::string, Pin> pins)
+        :
+          templates_count(count),
+          allowed_types(allowed),
+          pins(pins)
+    {}
+
     unsigned templates_count;
     std::vector<std::vector<DataType>> allowed_types;
     std::map<std::string, Pin> pins;
-    std::string name;
 };
 
 struct Net {
     Pin* output_pin;
     std::vector<Pin*> input_pins;
-    std::string name;
+    std::string type;
 };
 
 struct ModuleDeclaration {
@@ -142,10 +165,18 @@ struct ParsedFile {
             n.dump(o);
     }
 
-    std::string generateCode(std::vector<std::string> &mod, std::set<std::string> &net) const;
+    std::string generateCode(std::map<std::string, const ModuleDeclaration*>&, std::set<std::string> &) const;
 };
 
 struct ParseError {
+    ParseError(){}
+
+    ParseError(std::string mess, size_t lin)
+        :
+          message(mess),
+          line(lin)
+    {}
+
     std::string message;
     size_t line;
     
