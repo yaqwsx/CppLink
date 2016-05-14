@@ -166,19 +166,37 @@ int main(int argc, char* argv[]) {
 		true,
 		"CppLink 0.1");
 
-    std::ifstream file(args["<input_file>"].asString());
-    // ToDo: Check if file is open
+	std::string in_file = args["<input_file>"].asString();
+	std::string out_file = args["<output_file>"].asString();
 
-    std::vector<string> vecs = translator::read_file(file);
+    std::ifstream filein(in_file);
+	if (!filein.is_open()) {
+		std::cerr << "Cannot open input file " << in_file << "!\n";
+		return 1;
+	}
+
+	std::ofstream fileout(out_file);
+	if (!fileout.is_open()) {
+		std::cerr << "Cannot open output file " << out_file << "!\n";
+		return 1;
+	}
+
+    std::vector<string> vecs = translator::read_file(filein);
+	if (!filein.good()) {
+		std::cerr << "Cannot read from input file " << in_file << "!\n";
+		return 1;
+	}
     auto res = translator::parse_file(vecs);
 
     std::vector<string> modules;
     std::set<string> nets;
-
-    std::ofstream fileout(args["<output_file>"].asString());
-    // ToDo: Check if file open
-
     fileout << generateHeaders() << "int main(int argc, char* argv[]){\n"
             << res.right().generateCode(modules, nets) << tabs(1) << "return 0;\n" << "}\n";
-
+	
+    if (!fileout.good()) {
+		std::cerr << "Cannot write to output file " << out_file << "!\n";
+		return 1;
+	}
+    
+	return 0;
 }

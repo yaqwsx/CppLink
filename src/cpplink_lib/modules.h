@@ -1,7 +1,10 @@
 #pragma once
 
-#include "maybe.h"
-#include "doubleequal.h"
+#ifndef _CPPLINK_GENERATED_CODE_
+    #include "maybe.h"
+    #include "doubleequal.h"			  
+#endif // !_CPPLINK_GENERATED_CODE_
+
 
 #include <vector>
 #include <array>

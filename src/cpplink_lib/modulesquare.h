@@ -1,6 +1,8 @@
 #pragma once
 
-#include "modules.h"
+#ifndef _CPPLINK_GENERATED_CODE_
+    #include "modules.h"	  
+#endif // !_CPPLINK_GENERATED_CODE_
 
 /*
        /period/-- Sin -- Sgn -- Convert(int->double) -- Mult -- Sum --/out/

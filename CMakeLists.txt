@@ -23,6 +23,14 @@ flex_target(SCANNER src/parsers/tokens.l
     ${CMAKE_CURRENT_BINARY_DIR}/parser/tokens.cpp)
 add_flex_bison_dependency(SCANNER PARSER)
 
+# Setup sources to constants
+add_custom_command(
+	OUTPUT cpplink_const_lib.h cpplink_const_lib.cpp
+	COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/utils/files_to_constants.py"
+			"${CMAKE_CURRENT_BINARY_DIR}/cpplink_const_lib"
+			"${CMAKE_CURRENT_SOURCE_DIR}/src/cpplink_lib/*"
+	DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/cpplink_lib/*")
+
 # Include directories
 include_directories(src libs)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}
@@ -31,7 +39,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}
 
 # Setup binaries
 add_executable(cpplink src/quoteunquotecompiler.cpp ${BIN_SOURCES}
-	${BISON_PARSER_OUTPUTS} ${FLEX_SCANNER_OUTPUTS} libs/docopt/docopt.cpp)
+	${BISON_PARSER_OUTPUTS} ${FLEX_SCANNER_OUTPUTS} libs/docopt/docopt.cpp cpplink_const_lib.cpp)
 add_executable(tests src/tests.cpp ${BIN_SOURCES} ${TEST_SOURCES}
     ${BISON_PARSER_OUTPUTS} ${FLEX_SCANNER_OUTPUTS})
 
