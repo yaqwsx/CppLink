@@ -165,7 +165,8 @@ struct ParsedFile {
             n.dump(o);
     }
 
-    std::string generateCode(std::map<std::string, const ModuleDeclaration*>&, std::set<std::string> &) const;
+    std::string generateCode(std::map<std::string, const ModuleDeclaration*>&,
+        std::map<std::string, std::string> &) const;
 };
 
 struct ParseError {

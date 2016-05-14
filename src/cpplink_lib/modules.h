@@ -66,7 +66,11 @@ struct Net : BaseNet {
     void step() {
         for (auto in : this->inputs)
             in->value = output->value;
-        output->value = Maybe<T>(); //nothing
+        //output->value = Maybe<T>(); //nothing
+    }
+    
+	Maybe<T> getValue() {
+		return output->value;
     }
 
 private:

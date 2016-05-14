@@ -45,7 +45,7 @@ struct Maybe {
         return *this;
     }
 
-    bool isValid() {
+    bool isValid() const {
         return valid;
     }
 

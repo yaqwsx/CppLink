@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <cassert>
 #include <docopt/docopt.h>
 
 #include "quoteunquotecompiler.h"
@@ -48,6 +49,8 @@ string generateHeaders(bool embed) {
 		res += "\n";
 		res += MODULES_H;
 		res += "\n";
+		res += TABLE_WRITER_H;
+		res += "\n";
 	}
 	else {
 		res += "#include <cpplink_lib.h>\n";
@@ -86,20 +89,39 @@ string getPinType(DeclarationsMap& modules, string moduleName, string pinName) {
     return typeToStr[m->template_args[pin.pos - 1]];
 }
 
-string generateSystemSteps(std::vector<string>& mods, std::set<string>& nets) {
-    string res = tabs(1) + "std::vector<std::pair<Module*, std::string>> modules{";
-    for(unsigned i=0; i<mods.size(); i++) {
-        res += "{&" + mods[i] + ", " + "\"" + mods[i] + "\"}";
-        if (i<mods.size()-1) res += ", ";
+string generateSystemSteps(const std::vector<ModuleDeclaration>& modules,
+    const std::map<std::string, std::string>& nets,
+    const std::vector<string>& watched_nets, long steps)
+{
+	std::string res;
+	if (steps == -1)
+		res += tabs(1) + "for(long __cpplink_i = 0; true ; __cpplink_i++) {\n";
+	else
+		res += tabs(1) + "for(long __cpplink_i = 0; "
+            "__cpplink_i != " + std::to_string(steps) + "; __cpplink_i++) {\n";
+
+	res += tabs(2) + "// Propagate values throug nets\n";
+	for (const auto& net : nets)
+		res += tabs(2) + net.first + ".step();\n";
+
+	res += "\n";
+	res += tabs(2) + "// Do step in each modules\n";
+
+	for (const auto& module : modules)
+		res += tabs(2) + module.name + ".step();\n";
+
+	if (!watched_nets.empty()) {
+		res += "\n";
+		res += tabs(2) + "// Output values in this step\n";
+		res += tabs(2) + "__cpplink_table.write_line(\n";
+		res += tabs(3) + "__cpplink_i";
+		for (const std::string& net : watched_nets)
+			res += ",\n" + tabs(3) + net + ".getValue()";
+		res += "\n" + tabs(2) + ");\n";
     }
-    res += "};\n";
 
-    res += tabs(1) + "for(size_t i=0; i<10; i++) {\n" +
-            tabs(2) + "for(auto m : modules) {\n" +
-            tabs(3) + "std::cout << m.second << \"\\n\";\n" +
-            tabs(3) + "m.first->step();\n" + tabs(2) + "}\n" + tabs(1) + "}\n";
-
-    return res;
+	res += tabs(1) + "}\n";
+	return res;
 }
 
 
@@ -134,7 +156,7 @@ string NetPinCommand::generateCode() const {
     return res;
 }
 
-string ParsedFile::generateCode(DeclarationsMap& modules, std::set<string>& nets) const {
+string ParsedFile::generateCode(DeclarationsMap& modules, std::map<string, string>& nets) const {
         std::string res;
 
         for (const auto& d : declarations) {
@@ -143,19 +165,21 @@ string ParsedFile::generateCode(DeclarationsMap& modules, std::set<string>& nets
         res += "\n";
 
         for (const auto& n : net_pin) {
+	        string net_type;
             if (constDeclarations.find(n.net) != constDeclarations.end()) {
                 res += generateConstWiring(n);
             } else {
                 if (nets.find(n.net) == nets.end()) {
-                    res += generateNetDeclaration(n.net, getPinType(modules, n.module, n.pin));
+	                net_type = getPinType(modules, n.module, n.pin);
+                    res += generateNetDeclaration(n.net, net_type);
                 }
                 res += n.generateCode();
+	            nets.insert({ n.net, net_type });
             }
-            nets.insert(n.net);
+            
         }
         res += "\n";
         return res;
-        //return res + generateSystemSteps(mods, nets);
 }
 
 void print_error_messages(std::ostream& o, std::vector<translator::ParseError>& errors,
@@ -195,6 +219,36 @@ nets_to_watch(std::string config, translator::ParsedFile& file) {
 	if (errs.empty())
 		return { nets, true };
 	return { errs, false };
+}
+
+std::string generate_output(std::string output_type, const std::map<std::string, std::string>& nets,
+		const std::vector<std::string>& watched)
+{
+	if (output_type == "silent")
+		return {};
+	if (output_type == "excel")
+		output_type = "ExcelCsvDialect";
+	else if (output_type == "csv")
+		output_type = "CsvDialect";
+	else if (output_type == "plain")
+		output_type = "PlainTextDialect";
+	else
+		assert(false && "Invalid output type specified");
+
+	std::string res;
+	res += tabs(1) + "TableWriter<" + output_type + ", int";
+	for (const std::string& net : watched) {
+		res += ",\n";
+		res += tabs(3) + "Maybe<" + nets.find(net)->second + ">";
+    }
+	res += "\n" + tabs(2) + "> __cpplink_table (std::cout, {\"step\"";
+	for (const std::string& net : watched) {
+		res += ",\n";
+		res += tabs(3) + '"' + net + '"';
+    }
+	res += "\n" + tabs(2) + "});\n\n";
+
+	return res;
 }
 
 } //namespace cpplink
@@ -247,28 +301,39 @@ int main(int argc, char* argv[]) {
 	}
 
     DeclarationsMap modules; //"name" -> ModuleDeclaration
-    std::set<string> nets;
+    std::map<string, string> nets; // net -> type
     
     ParsedFile parsedFile = res.right();
     auto errors = typeCheck(parsedFile, modules);
     
-    if (!errors.empty()) {
-        std::cout << "Could not produce .cpp file, following errors occurred:\n\n";
-        std::sort(errors.begin(), errors.end(), [](ParseError& a, ParseError& b){ return a.line < b.line; });
-        for (auto er : errors) {
-            std::cout << er.line << " : " << er.message << '\n';
-        }
+	if (!errors.empty()) {
+		std::cerr << "Could not produce .cpp file, following errors occurred:\n\n";
+		std::sort(errors.begin(), errors.end(), [](ParseError& a, ParseError& b){ return a.line < b.line; });
+		print_error_messages(std::cerr, errors, vecs);
+		return 1;
+	}
 
-    } else {
-		
-        fileout << generateHeaders(embed_lib) << "int main(int argc, char* argv[]){\n"
-                << res.right().generateCode(modules, nets) << tabs(1) << "return 0;\n" << "}\n";
+	std::vector<std::string> net_watch;
+	bool valid;
+	std::tie(net_watch, valid) = nets_to_watch(to_watch, parsedFile);
+	if (!valid) {
+		std::cerr << "Invalid net watch list:\n";
+		for (const std::string& err : net_watch)
+			std::cerr << "\t" << err << "\n";
+		return 1;
+    }
+
+	fileout << generateHeaders(embed_lib)
+	        << "int main(int argc, char* argv[]){\n"
+	        << parsedFile.generateCode(modules, nets)
+            << generate_output(output_type, nets, net_watch)
+            << generateSystemSteps(parsedFile.declarations, nets, net_watch, step_num)
+            << tabs(1) << "return 0;\n" << "}\n";
                 
-        if (!fileout.good()) {
-		    std::cerr << "Cannot write to output file " << out_file << "!\n";
-		    return 1;
-	    }
-    }    
-    
+    if (!fileout.good()) {
+		std::cerr << "Cannot write to output file " << out_file << "!\n";
+		return 1;
+	}
+
 	return 0;
 }

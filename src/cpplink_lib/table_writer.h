@@ -3,7 +3,10 @@
 #include <cassert>
 #include <type_traits>
 #include <string>
-#include "cpplink_lib/maybe.h"
+
+#ifndef _CPPLINK_EMBEDDED_CODE_
+    #include "maybe.h"		  
+#endif // !_CPPLINK_EMBEDDED_CODE_
 
 namespace cpplink {
 
@@ -19,7 +22,7 @@ struct CsvDialect {
 	static constexpr bool        quote_string = true;
 };
 
-struct ExceCsvlDialect {
+struct ExcelCsvDialect {
 	static constexpr const char* header    = "sep=,\n";
 	static constexpr const char* separator = ",";
 	static constexpr const char* line_end  = "\n";
@@ -57,9 +60,9 @@ template <typename Dialect, typename T>
 struct ItemWriter<Dialect, Maybe<T>>: ItemEscaper {
 	static void write_item(std::ostream& file, const Maybe<T>& t) {
 		if (!t.isValid())
-			ItemWriter<Dialect, std::string>::write_item("None");
+			ItemWriter<Dialect, std::string>::write_item(file, "None");
 		else
-		    ItemWriter<Dialect, T>::write_item(t.value);
+		    ItemWriter<Dialect, T>::write_item(file, t.value);
     }
 };
 
