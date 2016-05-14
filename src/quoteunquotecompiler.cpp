@@ -15,17 +15,17 @@ static const char USAGE[] =
 R"(CppLink.
 
 Usage:
-    cpplink <input_file> <output_file> [--interface --watch --steps] [--uselib]
+    cpplink <input_file> <output_file> --steps=<x> [--interface=<type> --watch=<list>] [--uselib]
     cpplink -h | --help
     cpplink --version
 
 Options:
-    -h --help     Show help.
-    --version     Show version.
-    --interface   Specifies output interface of produces code: silent, csv or plan
-    --watch       Comma separated list with net names, which will be watched
-    --steps       Number of iterations
-    --uselib      Use #include <cpplink_lib.h> instead of embedding it
+    -h --help             Show help.
+    --version             Show version.
+    --interface=<type>    Specifies output interface of produces code: csv, excel or plain.
+    --watch=<list>        Comma separated list with net names, which will be watched.
+    --steps=<x>           Number of iterations, -1 for infinity.
+    --uselib              Use #include <cpplink_lib.h> instead of embedding it.
 )";
 
 namespace cpplink {
@@ -170,6 +170,33 @@ void print_error_messages(std::ostream& o, std::vector<translator::ParseError>& 
 	std::cerr << "Translation aborted\n";
 }
 
+std::pair<std::vector<std::string>, bool>
+nets_to_watch(std::string config, translator::ParsedFile& file) {
+	std::vector<std::string> errs;
+	std::vector<std::string> nets;
+
+	std::set<std::string> net_names;
+	for (const auto& cmd : file.net_pin)
+		net_names.insert(cmd.net);
+	for (const auto& cmd : file.net_const)
+		net_names.insert(cmd.net);
+
+	std::istringstream in(config);
+	std::string net_name;
+    while(getline(in, net_name, ',')) {
+	    if (net_names.find(net_name) == net_names.end()) {
+		    errs.push_back("\"" + net_name + "\" is not a valid net name.");
+	    }
+	    else {
+		    nets.push_back(net_name);
+        }
+    }
+
+	if (errs.empty())
+		return { nets, true };
+	return { errs, false };
+}
+
 } //namespace cpplink
 
 
@@ -184,7 +211,16 @@ int main(int argc, char* argv[]) {
 
 	std::string in_file = args["<input_file>"].asString();
 	std::string out_file = args["<output_file>"].asString();
-	bool embed_lib = !args["--uselib"].asBool();
+	std::string output_type = args["--interface"].isString() ? args["--interface"].asString() : "silent";
+	std::transform(output_type.begin(), output_type.end(), output_type.begin(), ::tolower);
+	std::string to_watch = args["--watch"].isString() ? args["--watch"].asString() : "";
+	long        step_num = args["--steps"].asLong();
+	bool        embed_lib = !args["--uselib"].asBool();
+
+	if (step_num < -1) {
+		std::cerr << "Invalid number of steps! Please specify positive number or -1 for infinite loop\n";
+		return 1;
+    }
 
     std::ifstream filein(in_file);
 	if (!filein.is_open()) {
@@ -203,6 +239,7 @@ int main(int argc, char* argv[]) {
 		std::cerr << "Cannot read from input file " << in_file << "!\n";
 		return 1;
 	}
+
     auto res = translator::parse_file(vecs);
 	if (res.isLeft()) {
 		print_error_messages(std::cerr, res.left(), vecs);

@@ -3,6 +3,7 @@
 #include <cassert>
 #include <type_traits>
 #include <string>
+#include "cpplink_lib/maybe.h"
 
 namespace cpplink {
 
@@ -52,6 +53,16 @@ struct ItemWriter : ItemEscaper {
     }
 };
 
+template <typename Dialect, typename T>
+struct ItemWriter<Dialect, Maybe<T>>: ItemEscaper {
+	static void write_item(std::ostream& file, const Maybe<T>& t) {
+		if (!t.isValid())
+			ItemWriter<Dialect, std::string>::write_item("None");
+		else
+		    ItemWriter<Dialect, T>::write_item(t.value);
+    }
+};
+
 template <typename Dialect>
 struct ItemWriter<Dialect, std::string> : ItemEscaper {
 	static void write_item(std::ostream& file, const std::string& t) {
@@ -67,7 +78,7 @@ public:
 	/*constexpr*/ TableWriter(std::ostream& o, std::initializer_list<std::string> columns) 
         : _file(o)
     {
-        // columns.size() is no a constexpr... yet
+        // columns.size() is not a constexpr... yet
 		//static_assert(columns.size() == arg_count, "Wrong number of columns");
 		assert(columns.size() == arg_count && "Wrong number of columns");
 	    _file << Dialect::header;

@@ -196,4 +196,6 @@ T add_line_num(T&& t, size_t line) {
     return t;
 }
 
+std::string trim(std::string s);
+
 }}
