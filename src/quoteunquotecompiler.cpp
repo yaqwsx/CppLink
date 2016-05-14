@@ -14,7 +14,7 @@ static const char USAGE[] =
 R"(CppLink.
 
 Usage:
-    cpplink <input_file> <output_file> [--interface --watch --steps]
+    cpplink <input_file> <output_file> [--interface --watch --steps] [--uselib]
     cpplink -h | --help
     cpplink --version
 
@@ -24,6 +24,7 @@ Options:
     --interface   Specifies output interface of produces code: silent, csv or plan
     --watch       Comma separated list with net names, which will be watched
     --steps       Number of iterations
+    --uselib      Use #include <cpplink_lib.h> instead of embedding it
 )";
 
 namespace cpplink {
@@ -33,16 +34,28 @@ using namespace translator;
 std::map<string, string> _types{{"REAL", "double"}, {"INT", "int64_t"}, {"BOOL", "bool"}};
 
 
-string generateHeaders() {
-	return std::string() +
-           "// CppLink header begin ===========================================================\n" +
-           "#define _CPPLINK_GENERATED_CODE_\n" +
-           "#include <iostream>\n" +
-           MAYBE_H + "\n" +
-           DOUBLEEQUAL_H + "\n" +
-           MODULES_H + "\n" +
-           "\nusing namespace cpplink;\n" +
-           "// CppLink header end =============================================================\n\n\n";
+string generateHeaders(bool embed) {
+	std::string res;
+	res += "// CppLink header begin ===========================================================\n";
+	res += "#include <iostream>\n";
+	if (embed) {
+		res += "#define _CPPLINK_EMBEDDED_CODE_\n";
+		res += "#include <iostream>\n";
+		res += MAYBE_H;
+		res += "\n";
+		res += DOUBLEEQUAL_H;
+		res += "\n";
+		res += MODULES_H;
+		res += "\n";
+	}
+	else {
+		res += "#include <cpplink_lib.h>\n";
+    }
+
+	res += "\nusing namespace cpplink;\n";
+	res += "// CppLink header end =============================================================\n\n\n";
+
+	return res;
 }
 
 string tabs(unsigned u) {
@@ -161,6 +174,18 @@ string ParsedFile::generateCode(std::vector<string>& mods, std::set<string>& net
         return res + generateSystemSteps(mods, nets);
 }
 
+void print_error_messages(std::ostream& o, std::vector<translator::ParseError>& errors,
+		std::vector<string>& source)
+{
+	std::cerr << errors.size() <<  " translation errors occured!\n";
+	for (const translator::ParseError& e : errors) {
+		std::cerr << "On line " << e.line << ": " << e.message << "\n";
+		std::cerr << "   line: " << source[e.line - 1] << "\n";
+	}
+
+	std::cerr << "Translation aborted\n";
+}
+
 } //namespace cpplink
 
 
@@ -175,6 +200,7 @@ int main(int argc, char* argv[]) {
 
 	std::string in_file = args["<input_file>"].asString();
 	std::string out_file = args["<output_file>"].asString();
+	bool embed_lib = !args["--uselib"].asBool();
 
     std::ifstream filein(in_file);
 	if (!filein.is_open()) {
@@ -195,20 +221,13 @@ int main(int argc, char* argv[]) {
 	}
     auto res = translator::parse_file(vecs);
 	if (res.isLeft()) {
-		auto errs = res.left();
-		std::cerr << errs.size() <<  " translation errors occured!\n";
-        for (const ParseError& e : errs) {
-	        std::cerr << "On line " << e.line << ": " << e.message << "\n";
-	        std::cerr << "   line: " << vecs[e.line - 1] << "\n";
-        }
-
-		std::cerr << "Translation aborted\n";
+		print_error_messages(std::cerr, res.left(), vecs);
 		return 1;
 	}
 
     std::vector<string> modules;
     std::set<string> nets;
-    fileout << generateHeaders() << "int main(int argc, char* argv[]){\n"
+    fileout << generateHeaders(embed_lib) << "int main(int argc, char* argv[]){\n"
             << res.right().generateCode(modules, nets) << tabs(1) << "return 0;\n" << "}\n";
 	
     if (!fileout.good()) {

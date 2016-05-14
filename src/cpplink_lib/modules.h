@@ -1,9 +1,9 @@
 #pragma once
 
-#ifndef _CPPLINK_GENERATED_CODE_
+#ifndef _CPPLINK_EMBEDDED_CODE_
     #include "maybe.h"
     #include "doubleequal.h"			  
-#endif // !_CPPLINK_GENERATED_CODE_
+#endif // !_CPPLINK_EMBEDDED_CODE_
 
 
 #include <vector>
