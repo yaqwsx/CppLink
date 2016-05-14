@@ -1,7 +1,7 @@
 #pragma once
 
 #include "translator.h"
-#include "doubleequal.h"
+#include "cpplink_lib/doubleequal.h"
 #include <algorithm>
 
 namespace cpplink {
