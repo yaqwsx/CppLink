@@ -45,6 +45,6 @@ add_executable(tests src/tests.cpp ${BIN_SOURCES} ${TEST_SOURCES}
 
 
 # Set C++11 standard
-add_definitions("-std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 target_link_libraries(tests  "${LIBRARIES_FROM_REFERENCES}")
 target_link_libraries(cpplink  "${LIBRARIES_FROM_REFERENCES}")

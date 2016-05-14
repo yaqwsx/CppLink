@@ -7,25 +7,25 @@
 using namespace cpplink;
 using namespace translator;
 
-bool match_module_declaration(ModuleDeclaration a, ModuleDeclaration b) {
+void match_module_declaration(ModuleDeclaration a, ModuleDeclaration b) {
 	REQUIRE(a.type == b.type);
 	REQUIRE(a.name == b.name);
 	REQUIRE(a.template_args == b.template_args);
 }
 
-bool match_net_command(NetPinCommand a, NetPinCommand b) {
+void match_net_command(NetPinCommand a, NetPinCommand b) {
 	REQUIRE(a.net == b.net);
 	REQUIRE(a.module == b.module);
 	REQUIRE(a.pin == b.pin);
 	REQUIRE(a.is_out == b.is_out);
 }
 
-bool match_net_const(NetConstCommand a, NetConstCommand b) {
+void match_net_const(NetConstCommand a, NetConstCommand b) {
 	REQUIRE(a.net == b.net);
 	REQUIRE(a.parameter == b.parameter);
 }
 
-bool match_io_pin(IoPinDeclaration a, IoPinDeclaration b) {
+void match_io_pin(IoPinDeclaration a, IoPinDeclaration b) {
     REQUIRE(a.module == b.module);
 	REQUIRE(a.name == b.name);
 	REQUIRE(a.is_out == b.is_out);
