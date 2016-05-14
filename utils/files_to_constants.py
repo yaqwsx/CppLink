@@ -3,7 +3,8 @@
 import sys
 import ntpath
 
-escape = [('\\', '\\\\'), ('\'', '\\\''), ('"', '\\"'), ('?', '\\?'), ('\n', '\\n'), ('\r', '')]
+escape = [('\\', '\\\\'), ('\'', '\\\''), ('"', '\\"'), ('?', '\\?'),
+    ('\n', '\\n'), ('\r', ''), ('#pragma once', '')]
 
 if len(sys.argv) < 3:
     print("Invalid usage! Please specify output file and source files")

@@ -54,8 +54,8 @@ static void yyerror(StatementUnion& u, const char *s) { u = std::string(s); }
 %token <token>  TUSING   "keyword 'using'"
 %token <token>  TGENERIC "keyword 'generic'"
 %token <token>  TBLACKBOX "keyword 'blackbox'"
-%token <token>  TIN_WORD  "keyword 'in'"
-%token <token>  TOUT_WORD "keyword 'out'"
+%token <token>  TIN_WORD  "keyword 'modulein'"
+%token <token>  TOUT_WORD "keyword 'moduleout'"
 
 
 %%

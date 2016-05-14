@@ -1,10 +1,12 @@
-#include "quoteunquotecompiler.h"
 #include <iostream>
 #include <fstream>
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
 #include <docopt/docopt.h>
+
+#include "quoteunquotecompiler.h"
+#include <cpplink_const_lib.h>
 
 using std::string;
 
@@ -32,10 +34,15 @@ std::map<string, string> _types{{"REAL", "double"}, {"INT", "int64_t"}, {"BOOL",
 
 
 string generateHeaders() {
-    return "#include \"modules.h\" \n"
-           "#include \"translator.h\" \n"
-           "#include <iostream>\n\n"
-           "using namespace cpplink;\n\n";
+	return std::string() +
+           "// CppLink header begin ===========================================================\n" +
+           "#define _CPPLINK_GENERATED_CODE_\n" +
+           "#include <iostream>\n" +
+           MAYBE_H + "\n" +
+           DOUBLEEQUAL_H + "\n" +
+           MODULES_H + "\n" +
+           "\nusing namespace cpplink;\n" +
+           "// CppLink header end =============================================================\n\n\n";
 }
 
 string tabs(unsigned u) {
@@ -182,11 +189,22 @@ int main(int argc, char* argv[]) {
 	}
 
     std::vector<string> vecs = translator::read_file(filein);
-	if (!filein.good()) {
+	if (!filein.good() && !filein.eof()) {
 		std::cerr << "Cannot read from input file " << in_file << "!\n";
 		return 1;
 	}
     auto res = translator::parse_file(vecs);
+	if (res.isLeft()) {
+		auto errs = res.left();
+		std::cerr << errs.size() <<  " translation errors occured!\n";
+        for (const ParseError& e : errs) {
+	        std::cerr << "On line " << e.line << ": " << e.message << "\n";
+	        std::cerr << "   line: " << vecs[e.line - 1] << "\n";
+        }
+
+		std::cerr << "Translation aborted\n";
+		return 1;
+	}
 
     std::vector<string> modules;
     std::set<string> nets;

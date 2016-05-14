@@ -81,8 +81,8 @@ TEST_CASE("parser:simple") {
 
 	SECTION("IoPinDeclaration") {
 		std::istringstream prog(
-        R"(in module.pin
-           out module.pin
+        R"(modulein module.pin
+           moduleout module.pin
            )");
 
 		auto parsed_file = parse_file(read_file(prog));
