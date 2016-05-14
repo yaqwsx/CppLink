@@ -31,7 +31,7 @@
 "true"                  return TOKEN(TTRUE);
 "false"                 return TOKEN(TFALSE);
 [0-9]+                  SAVE_TOKEN; return TINTEGER;
-[0-9]+.[0-9]*           SAVE_TOKEN; return TREAL;
+[0-9]+\.[0-9]*           SAVE_TOKEN; return TREAL;
 [a-zA-Z_][a-zA-Z0-9_]*  SAVE_TOKEN; return TNAME;
 .                       printf("Unknown token!\n"); yyterminate();
 

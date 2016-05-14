@@ -77,6 +77,8 @@ TEST_CASE("parser:simple") {
 		match_net_command(res.net_pin[1], { "nn", "b", "pin2", false });
 
 		REQUIRE(res.net_const.size() == 2);
+		match_net_const(res.net_const[0], { "nn", { int64_t(4) } });
+		match_net_const(res.net_const[1], { "nn", { double(4.42) } });
 	}
 
 	SECTION("IoPinDeclaration") {
