@@ -6,11 +6,11 @@ CppLink is inspired by Simulink and HAL from the LinuxCNC project. CppLink takes
 the basics from data-flow programming and presents them in the simplest form
 available.
 
-CppLink contains two parts -- C++ data-flow programming library with predefined
+CppLink contains two parts - C++ data-flow programming library with predefined
 modules for data transformation and CppLink translator which translates netlist
 files into C++ code that simulates the system described by the netlist file.
 
-# How to use
+# How to use it
 
 There are two ways to use CppLink. Either you can use the data-flow C++ library
 directly and write a C++ code using it, or you can describe your system's netlist
@@ -68,11 +68,11 @@ code:
 * There are three supported output interfaces. These interfaces can be specified
   using the `--interface=<type>` flag.
 
-  - `csv` -- simple CSV output format with quoted strings
+  - `csv` - simple CSV output format with quoted strings
 
-  - `excel` -- CSV output with MS Excel-specific dialect
+  - `excel` - CSV output with MS Excel-specific dialect
 
-  - `plain` -- tab-separated columns. This format is suitable e.g. for GNUplot.
+  - `plain` - tab-separated columns. This format is suitable e.g. for GNUplot.
 
 * To specify which columns should be output in the type, a comma-separated list
   of net names can be specified using `--watch=<columns>`.
