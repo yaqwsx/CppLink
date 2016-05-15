@@ -1,0 +1,20 @@
+# Example of signal generators
+# issue with watch=a,b,out
+ModuleSaw saw
+net saw.amplitude <- sawamp
+net saw.period <- sawper
+net saw.out -> a
+net 10.0 -> sawamp
+net 25.0 -> sawper
+
+ModuleSin sin
+net sin.amplitude <- sinamp
+net sin.period <- sinper
+net sin.out -> b
+net 10.0 -> sinamp
+net 10.0 -> sinper
+
+ModuleSum<REAL> sum
+net sum.in1 <- a
+net sum.in2 <- b
+net sum.out -> out

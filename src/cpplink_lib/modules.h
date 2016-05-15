@@ -179,6 +179,36 @@ private:
     double x = 0;
 };
 
+struct ModuleSaw : Module {
+ 
+	void step() {
+		if (!period.isValid() || doubleEqual(period.getValue(), 0) || !amplitude.isValid()) {
+			phase = 0;
+			out = Maybe<double>();
+			return;
+        }
+		phase += 1;
+		while (phase > period.value.value)
+			phase -= period.value.value;
+
+		double q_period = period.value.value / 4.0;
+		if (phase < q_period) {
+			out = phase / q_period * amplitude.value.value;
+		}
+		else if (phase < 3 * q_period) {
+			out = amplitude.value.value - (phase - q_period) / q_period * amplitude.value.value;
+		}
+		else {
+			out = -amplitude.value.value + (phase - 3 * q_period) / q_period * amplitude.value.value;
+        }
+    }
+	InputPin<double> amplitude;
+	InputPin<double> period;
+	OutputPin<double> out;
+private:
+	double phase = 0;
+};
+
 
 struct ModuleLinear : Module {
 
