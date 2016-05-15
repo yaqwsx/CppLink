@@ -39,7 +39,7 @@ net sum.in2 <- b
 net sum.out -> out
 ```
 
-This example instantiates three data-transformation boxes -- one saw generator
+This example instantiates three data-transformation boxes - one saw generator
 with a period of 25 ticks and amplitude 10 and a sine wave generator with
 amplitude 10 and a period of 10 ticks. Output signal of these generators is then
 combined together.
@@ -76,6 +76,12 @@ code:
 
 * To specify which columns should be output in the type, a comma-separated list
   of net names can be specified using `--watch=<columns>`.
+
+# Building
+
+To build CppLink you need Bison, Flex, Cmake >= 2.8 and Clang >= 3.6. Make sure
+Clang is set as compiler for Cmake. Then run `mkdir build; cd build; cmake ..; make`
+to compile CppLink. CppLink translator binary is located in `build` directory.
 
 # Authors
 
