@@ -69,13 +69,6 @@ string tabs(unsigned u) {
     return res;
 }
 
-template <typename T>
-string itos(T d) {
-    std::ostringstream strs;
-    strs << std::setprecision(15) << d;
-    return strs.str();
-}
-
 string getPinType(DeclarationsMap& modules, string moduleName, string pinName) {
     std::vector<DataType> types{Int, Real, Bool};
 
@@ -100,12 +93,12 @@ string generateSystemSteps(const std::vector<ModuleDeclaration>& modules,
 		res += tabs(1) + "for(long __cpplink_i = 0; "
             "__cpplink_i != " + std::to_string(steps) + "; __cpplink_i++) {\n";
 
-	res += tabs(2) + "// Propagate values throug nets\n";
+	res += tabs(2) + "// Propagate values through nets\n";
 	for (const auto& net : nets)
 		res += tabs(2) + net.first + ".step();\n";
 
 	res += "\n";
-	res += tabs(2) + "// Do step in each modules\n";
+	res += tabs(2) + "// Do step in each module\n";
 
 	for (const auto& module : modules)
 		res += tabs(2) + module.name + ".step();\n";
