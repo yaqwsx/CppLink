@@ -39,7 +39,7 @@ struct PlainTextDialect {
 struct ItemEscaper {
 	static std::string escape_string(const std::string& s) {
 		std::string res;
-		res.reserve(s.size() * 1.2);
+		res.reserve(s.size() * (6/5));
 		for (char c : s) {
 			if (c == '"')
 				res.push_back('\\');

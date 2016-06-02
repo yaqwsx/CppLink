@@ -32,7 +32,7 @@ struct Pin {
     }
 
     Pin& operator=(Maybe<T>&& m) {
-        value = m;
+        value = std::move(m);
         return *this;
     }
 };
@@ -88,10 +88,6 @@ struct Module {
 template <typename T>
 struct ModuleRand : Module {
 
-    ModuleRand() {
-        gen = std::default_random_engine(time(NULL));
-    }
-
     void step() {
         typedef typename std::conditional<std::is_same<T, int64_t>::value,
                 std::uniform_int_distribution<int>,
@@ -101,7 +97,7 @@ struct ModuleRand : Module {
         T max_ = max.isValid()? max.getValue() : INT_MAX;
         Type distr(min_, max_);
 
-        for (size_t i=0; i<3; i++) distr(gen);
+        for (size_t i=0; i<3; i++) distr(gen); //to further randomize, first 3 values are thrown away
         out = distr(gen);
     }
 
@@ -110,7 +106,7 @@ struct ModuleRand : Module {
     OutputPin<T> out;
 
 private:
-    std::default_random_engine gen;
+    std::default_random_engine gen{static_cast<unsigned long>(time(NULL))};
 };
 
 template <>
@@ -118,7 +114,8 @@ struct ModuleRand<bool> : Module {
 
     void step() {
         std::uniform_int_distribution<int> distr(0, 1);
-        for (size_t i=0; i<3; i++) distr(gen);
+
+        for (size_t i=0; i<3; i++) distr(gen); //to further randomize, first 3 values are thrown away
         out = distr(gen);
     }
 
@@ -181,32 +178,32 @@ private:
 
 struct ModuleSaw : Module {
  
-	void step() {
-		if (!period.isValid() || doubleEqual(period.getValue(), 0) || !amplitude.isValid()) {
-			phase = 0;
-			out = Maybe<double>();
-			return;
+    void step() {
+        if (!period.isValid() || doubleEqual(period.getValue(), 0) || !amplitude.isValid()) {
+            phase = 0;
+            out = Maybe<double>();
+            return;
         }
-		phase += 1;
-		while (phase > period.value.value)
-			phase -= period.value.value;
+        phase += 1;
+        while (phase > period.getValue())
+            phase -= period.getValue();
 
-		double q_period = period.value.value / 4.0;
-		if (phase < q_period) {
-			out = phase / q_period * amplitude.value.value;
-		}
-		else if (phase < 3 * q_period) {
-			out = amplitude.value.value - (phase - q_period) / q_period * amplitude.value.value;
-		}
-		else {
-			out = -amplitude.value.value + (phase - 3 * q_period) / q_period * amplitude.value.value;
+        double q_period = period.getValue() / 4.0;
+        if (phase < q_period) {
+            out = phase / q_period * amplitude.getValue();
+        }
+        else if (phase < 3 * q_period) {
+            out = amplitude.getValue() - (phase - q_period) / q_period * amplitude.getValue();
+        }
+        else {
+            out = -amplitude.getValue() + (phase - 3 * q_period) / q_period * amplitude.getValue();
         }
     }
-	InputPin<double> amplitude;
-	InputPin<double> period;
-	OutputPin<double> out;
+    InputPin<double> amplitude;
+    InputPin<double> period;
+    OutputPin<double> out;
 private:
-	double phase = 0;
+    double phase = 0;
 };
 
 
@@ -327,25 +324,13 @@ using ModuleLogicOr  = ModuleFunc<bool, std::logical_or<bool>>;
 using ModuleLogicXor = ModuleFunc<bool, std::bit_xor<bool>>;
 
 
-
-template <typename F>
-struct ModuleLambda : Module {
-    void step() {
-        out = apply(in1.value, in2.value, F());
-    }
-
-    InputPin<bool> in1;
-    InputPin<bool> in2;
-    OutputPin<bool> out;
-};
-
 struct FuncImpl {
 
     bool operator()(bool a, bool b) {
         return !(a && !b);
     }
 };
-using ModuleLogicImpl = ModuleLambda<FuncImpl>;
+using ModuleLogicImpl = ModuleFunc<bool, FuncImpl>;
 
 
 struct FuncXnor {
@@ -354,7 +339,7 @@ struct FuncXnor {
         return (a == b);
     }
 };
-using ModuleLogicXnor = ModuleLambda<FuncXnor>;
+using ModuleLogicXnor = ModuleFunc<bool, FuncXnor>;
 
 
 struct FuncNand {
@@ -363,7 +348,7 @@ struct FuncNand {
         return (!a || !b);
     }
 };
-using ModuleLogicNand = ModuleLambda<FuncNand>;
+using ModuleLogicNand = ModuleFunc<bool, FuncNand>;
 
 
 struct FuncNor {
@@ -372,7 +357,7 @@ struct FuncNor {
         return (!a && !b);
     }
 };
-using ModuleLogicNor = ModuleLambda<FuncNor>;
+using ModuleLogicNor = ModuleFunc<bool, FuncNor>;
 
 
 // ## relational

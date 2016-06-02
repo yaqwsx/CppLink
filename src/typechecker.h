@@ -91,7 +91,7 @@ std::vector<ParseError> typeCheck(ParsedFile& pf, DeclarationsMap& modules) {
         if (constDeclarations.find(n.net) != constDeclarations.end()) {
             constDeclarations[n.net] = {type, val};
             errors.push_back(ParseError("Multiple const nettings within "
-                                        + n.net + ". Last one will be used.", n.line));
+                                        + n.net + ".", n.line));
         } else {
             constDeclarations.insert({n.net,{type, val}});
         }

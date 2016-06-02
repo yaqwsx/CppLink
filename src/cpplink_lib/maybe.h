@@ -86,7 +86,7 @@ apply(Maybe<T> m, Maybe<T> n, F&& f) {
         return (std::forward<F>(f)(m.value, n.value)); //just
     }
 
-    return Maybe<decltype(f(T(),T()))>(); //nothing
+    return Maybe<typename std::result_of<F(T,T)>::type>(); //nothing
 }
 
 
