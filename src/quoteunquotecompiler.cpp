@@ -144,7 +144,7 @@ string ModuleDeclaration::generateCode() const {
 string NetPinCommand::generateCode() const {
     string res = tabs(1) + net + ".";
     res += is_out? "setOutputPin" : "addInputPin";
-    res += "(&" + module + "." + pin + ");\n";
+    res += "(" + module + "." + pin + ");\n";
 
     return res;
 }

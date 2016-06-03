@@ -4,9 +4,8 @@
 #include "cpplink_lib/doubleequal.h"
 #include <algorithm>
 
-namespace cpplink {
+namespace cpplink { namespace translator {
 
-using namespace translator;
 using DeclarationsMap = std::map<std::string, const ModuleDeclaration*>;
 
 
@@ -144,4 +143,4 @@ std::vector<ParseError> typeCheck(ParsedFile& pf, DeclarationsMap& modules) {
 }
 
 
-} //namespace cpplink
+}}

@@ -55,12 +55,12 @@ struct BaseNet{
 template <typename T>
 struct Net : BaseNet {
 
-    void addInputPin(InputPin<T>* in) {
-        inputs.push_back(in);
+    void addInputPin(InputPin<T>& in) {
+        inputs.push_back(&in);
     }
 
-    void setOutputPin(OutputPin<T>* out) {
-        output = out;
+    void setOutputPin(OutputPin<T>& out) {
+        output = &out;
     }
 
     void step() {

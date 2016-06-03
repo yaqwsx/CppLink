@@ -138,8 +138,8 @@ TEST_CASE("modules basic") {
         OutputPin<int> op;
 
         Net<int> n;
-        n.addInputPin(&ip);
-        n.setOutputPin(&op);
+        n.addInputPin(ip);
+        n.setOutputPin(op);
 
         op.value = 4;
         n.step();
@@ -153,11 +153,11 @@ TEST_CASE("modules basic") {
         ModuleIdentity<int> mi2;
 
         Net<int> n1;
-        n1.addInputPin(&mi2.in);
-        n1.setOutputPin(&mi.out); //MI => MI2
+        n1.addInputPin(mi2.in);
+        n1.setOutputPin(mi.out); //MI => MI2
         Net<int> n2;
-        n2.addInputPin(&mi.in);
-        n2.setOutputPin(&mi2.out); //MI2 => MI
+        n2.addInputPin(mi.in);
+        n2.setOutputPin(mi2.out); //MI2 => MI
         mi.in.value = 3;
         mi2.in.value = 2;
 
