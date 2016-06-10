@@ -116,42 +116,42 @@ struct NetConstCommand {
 };
 
 struct IoPinDeclaration {
-	std::string module;
-	std::string name;
-	bool is_out;
-	size_t line;
+    std::string module;
+    std::string name;
+    bool is_out;
+    size_t line;
 
     void dump(std::ostream& o) const {
-	    o << line << ": IoDefinition: " << (is_out ? "out" : "in")
+        o << line << ": IoDefinition: " << (is_out ? "out" : "in")
             << module << "." << name << "\n";
     }
 };
 
 struct BlackboxCommand {
-	int32_t steps;
-	size_t line;
+    int32_t steps;
+    size_t line;
 
     void dump(std::ostream& o) const {
-	    o << line << ": BlackboxCommand: " << steps << "\n";
+        o << line << ": BlackboxCommand: " << steps << "\n";
     }
 };
 
 struct GenericDeclaration {
-	std::string name;
-	size_t line;
+    std::string name;
+    size_t line;
 
     void dump(std::ostream& o) const {
-	    o << line << ": GenericDeclaration: " << name << "\n";
+        o << line << ": GenericDeclaration: " << name << "\n";
     }
 };
 
 struct ParsedFile {
-	brick::types::Maybe<BlackboxCommand> blackbox_def;
+    brick::types::Maybe<BlackboxCommand> blackbox_def;
     std::vector<ModuleDeclaration> declarations;
     std::vector<NetPinCommand> net_pin;
     std::vector<NetConstCommand> net_const;
-	std::vector<IoPinDeclaration> io_pins;
-	std::vector<GenericDeclaration> generics;
+    std::vector<IoPinDeclaration> io_pins;
+    std::vector<GenericDeclaration> generics;
     
     void dump(std::ostream& o) const {
         for (const auto& d : declarations)

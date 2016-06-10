@@ -37,29 +37,29 @@ std::map<string, string> _types{{"REAL", "double"}, {"INT", "int64_t"}, {"BOOL",
 
 
 string generateHeaders(bool embed) {
-	std::string res;
-	res += "// CppLink header begin ===========================================================\n";
-	res += "#include <iostream>\n";
-	if (embed) {
-		res += "#define _CPPLINK_EMBEDDED_CODE_\n";
-		res += "#include <iostream>\n";
-		res += MAYBE_H;
-		res += "\n";
-		res += DOUBLEEQUAL_H;
-		res += "\n";
-		res += MODULES_H;
-		res += "\n";
-		res += TABLE_WRITER_H;
-		res += "\n";
-	}
-	else {
-		res += "#include <cpplink_lib.h>\n";
+    std::string res;
+    res += "// CppLink header begin ===========================================================\n";
+    res += "#include <iostream>\n";
+    if (embed) {
+        res += "#define _CPPLINK_EMBEDDED_CODE_\n";
+        res += "#include <iostream>\n";
+        res += MAYBE_H;
+        res += "\n";
+        res += DOUBLEEQUAL_H;
+        res += "\n";
+        res += MODULES_H;
+        res += "\n";
+        res += TABLE_WRITER_H;
+        res += "\n";
+    }
+    else {
+        res += "#include <cpplink_lib.h>\n";
     }
 
-	res += "\nusing namespace cpplink;\n";
-	res += "// CppLink header end =============================================================\n\n\n";
+    res += "\nusing namespace cpplink;\n";
+    res += "// CppLink header end =============================================================\n\n\n";
 
-	return res;
+    return res;
 }
 
 string tabs(unsigned u) {
@@ -86,35 +86,35 @@ string generateSystemSteps(const std::vector<ModuleDeclaration>& modules,
     const std::map<std::string, std::string>& nets,
     const std::vector<string>& watched_nets, long steps)
 {
-	std::string res;
-	if (steps == -1)
-		res += tabs(1) + "for(long _cpplink_i = 0; true ; _cpplink_i++) {\n";
-	else
-		res += tabs(1) + "for(long _cpplink_i = 0; "
+    std::string res;
+    if (steps == -1)
+        res += tabs(1) + "for(long _cpplink_i = 0; true ; _cpplink_i++) {\n";
+    else
+        res += tabs(1) + "for(long _cpplink_i = 0; "
             "_cpplink_i != " + std::to_string(steps) + "; _cpplink_i++) {\n";
 
-	res += tabs(2) + "// Propagate values through nets\n";
-	for (const auto& net : nets)
-		res += tabs(2) + net.first + ".step();\n";
+    res += tabs(2) + "// Propagate values through nets\n";
+    for (const auto& net : nets)
+        res += tabs(2) + net.first + ".step();\n";
 
-	res += "\n";
-	res += tabs(2) + "// Do step in each module\n";
+    res += "\n";
+    res += tabs(2) + "// Do step in each module\n";
 
-	for (const auto& module : modules)
-		res += tabs(2) + module.name + ".step();\n";
+    for (const auto& module : modules)
+        res += tabs(2) + module.name + ".step();\n";
 
-	if (!watched_nets.empty()) {
-		res += "\n";
-		res += tabs(2) + "// Output values in this step\n";
-		res += tabs(2) + "_cpplink_table.write_line(\n";
-		res += tabs(3) + "_cpplink_i";
-		for (const std::string& net : watched_nets)
-			res += ",\n" + tabs(3) + net + ".getValue()";
-		res += "\n" + tabs(2) + ");\n";
+    if (!watched_nets.empty()) {
+        res += "\n";
+        res += tabs(2) + "// Output values in this step\n";
+        res += tabs(2) + "_cpplink_table.write_line(\n";
+        res += tabs(3) + "_cpplink_i";
+        for (const std::string& net : watched_nets)
+            res += ",\n" + tabs(3) + net + ".getValue()";
+        res += "\n" + tabs(2) + ");\n";
     }
 
-	res += tabs(1) + "}\n";
-	return res;
+    res += tabs(1) + "}\n";
+    return res;
 }
 
 
@@ -207,72 +207,72 @@ string ParsedFile::generateCode(DeclarationsMap& modules, std::map<string, strin
 }
 
 void print_error_messages(std::ostream& o, std::vector<translator::ParseError>& errors,
-		std::vector<string>& source)
+        std::vector<string>& source)
 {
-	std::cerr << errors.size() <<  " translation errors occurred!\n";
-	for (const translator::ParseError& e : errors) {
-		std::cerr << "On line " << e.line << ": " << e.message << "\n";
-		std::cerr << "   line: " << source[e.line - 1] << "\n";
-	}
+    std::cerr << errors.size() <<  " translation errors occurred!\n";
+    for (const translator::ParseError& e : errors) {
+        std::cerr << "On line " << e.line << ": " << e.message << "\n";
+        std::cerr << "   line: " << source[e.line - 1] << "\n";
+    }
 
-	std::cerr << "Translation aborted\n";
+    std::cerr << "Translation aborted\n";
 }
 
 std::pair<std::vector<std::string>, bool>
 nets_to_watch(std::string config, translator::ParsedFile& file) {
-	std::vector<std::string> errs;
-	std::vector<std::string> nets;
+    std::vector<std::string> errs;
+    std::vector<std::string> nets;
 
-	std::set<std::string> net_names;
-	for (const auto& cmd : file.net_pin)
-		net_names.insert(cmd.net);
-	for (const auto& cmd : file.net_const)
-		net_names.insert(cmd.net);
+    std::set<std::string> net_names;
+    for (const auto& cmd : file.net_pin)
+        net_names.insert(cmd.net);
+    for (const auto& cmd : file.net_const)
+        net_names.insert(cmd.net);
 
-	std::istringstream in(config);
-	std::string net_name;
+    std::istringstream in(config);
+    std::string net_name;
     while(getline(in, net_name, ',')) {
-	    if (net_names.find(net_name) == net_names.end()) {
-		    errs.push_back("\"" + net_name + "\" is not a valid net name.");
-	    }
-	    else {
-		    nets.push_back(net_name);
+        if (net_names.find(net_name) == net_names.end()) {
+            errs.push_back("\"" + net_name + "\" is not a valid net name.");
+        }
+        else {
+            nets.push_back(net_name);
         }
     }
 
-	if (errs.empty())
-		return { nets, true };
-	return { errs, false };
+    if (errs.empty())
+        return { nets, true };
+    return { errs, false };
 }
 
 std::string generate_output(std::string output_type, const std::map<std::string, std::string>& nets,
-		const std::vector<std::string>& watched)
+        const std::vector<std::string>& watched)
 {
-	if (output_type == "silent")
-		return {};
-	if (output_type == "excel")
-		output_type = "ExcelCsvDialect";
-	else if (output_type == "csv")
-		output_type = "CsvDialect";
-	else if (output_type == "plain")
-		output_type = "PlainTextDialect";
-	else
-		assert(false && "Invalid output type specified");
+    if (output_type == "silent")
+        return {};
+    if (output_type == "excel")
+        output_type = "ExcelCsvDialect";
+    else if (output_type == "csv")
+        output_type = "CsvDialect";
+    else if (output_type == "plain")
+        output_type = "PlainTextDialect";
+    else
+        assert(false && "Invalid output type specified");
 
-	std::string res;
-	res += tabs(1) + "TableWriter<" + output_type + ", int";
-	for (const std::string& net : watched) {
-		res += ",\n";
-		res += tabs(3) + "Maybe<" + nets.find(net)->second + ">";
+    std::string res;
+    res += tabs(1) + "TableWriter<" + output_type + ", int";
+    for (const std::string& net : watched) {
+        res += ",\n";
+        res += tabs(3) + "Maybe<" + nets.find(net)->second + ">";
     }
-	res += "\n" + tabs(2) + "> _cpplink_table (std::cout, {\"step\"";
-	for (const std::string& net : watched) {
-		res += ",\n";
-		res += tabs(3) + '"' + net + '"';
+    res += "\n" + tabs(2) + "> _cpplink_table (std::cout, {\"step\"";
+    for (const std::string& net : watched) {
+        res += ",\n";
+        res += tabs(3) + '"' + net + '"';
     }
-	res += "\n" + tabs(2) + "});\n\n";
+    res += "\n" + tabs(2) + "});\n\n";
 
-	return res;
+    return res;
 }
 
 } //namespace cpplink
@@ -282,47 +282,47 @@ using namespace cpplink;
 
 int main(int argc, char* argv[]) {
 
-	std::map<std::string, docopt::value> args = docopt::docopt(USAGE, 
-		{ argv + 1, argv + argc },
-		true,
-		"CppLink 0.1");
+    std::map<std::string, docopt::value> args = docopt::docopt(USAGE, 
+        { argv + 1, argv + argc },
+        true,
+        "CppLink 0.1");
 
-	std::string in_file = args["<input_file>"].asString();
-	std::string out_file = args["<output_file>"].asString();
-	std::string output_type = args["--interface"].isString() ? args["--interface"].asString() : "silent";
-	std::transform(output_type.begin(), output_type.end(), output_type.begin(), ::tolower);
-	std::string to_watch = args["--watch"].isString() ? args["--watch"].asString() : "";
-	long        step_num = args["--steps"].asLong();
-	bool        embed_lib = !args["--uselib"].asBool();
+    std::string in_file = args["<input_file>"].asString();
+    std::string out_file = args["<output_file>"].asString();
+    std::string output_type = args["--interface"].isString() ? args["--interface"].asString() : "silent";
+    std::transform(output_type.begin(), output_type.end(), output_type.begin(), ::tolower);
+    std::string to_watch = args["--watch"].isString() ? args["--watch"].asString() : "";
+    long        step_num = args["--steps"].asLong();
+    bool        embed_lib = !args["--uselib"].asBool();
 
-	if (step_num < -1) {
-		std::cerr << "Invalid number of steps! Please specify positive number or -1 for infinite loop\n";
-		return 1;
+    if (step_num < -1) {
+        std::cerr << "Invalid number of steps! Please specify positive number or -1 for infinite loop\n";
+        return 1;
     }
 
     std::ifstream filein(in_file);
-	if (!filein.is_open()) {
-		std::cerr << "Cannot open input file " << in_file << "!\n";
-		return 1;
-	}
+    if (!filein.is_open()) {
+        std::cerr << "Cannot open input file " << in_file << "!\n";
+        return 1;
+    }
 
-	std::ofstream fileout(out_file);
-	if (!fileout.is_open()) {
-		std::cerr << "Cannot open output file " << out_file << "!\n";
-		return 1;
-	}
+    std::ofstream fileout(out_file);
+    if (!fileout.is_open()) {
+        std::cerr << "Cannot open output file " << out_file << "!\n";
+        return 1;
+    }
 
     std::vector<string> vecs = translator::read_file(filein);
-	if (!filein.good() && !filein.eof()) {
-		std::cerr << "Cannot read from input file " << in_file << "!\n";
-		return 1;
-	}
+    if (!filein.good() && !filein.eof()) {
+        std::cerr << "Cannot read from input file " << in_file << "!\n";
+        return 1;
+    }
 
     auto res = translator::parse_file(vecs);
-	if (res.isLeft()) {
-		print_error_messages(std::cerr, res.left(), vecs);
-		return 1;
-	}
+    if (res.isLeft()) {
+        print_error_messages(std::cerr, res.left(), vecs);
+        return 1;
+    }
 
     DeclarationsMap modules; //"name" -> ModuleDeclaration
     std::map<string, string> nets; // net -> type
@@ -330,34 +330,34 @@ int main(int argc, char* argv[]) {
     ParsedFile parsedFile = res.right();
     auto errors = typeCheck(parsedFile, modules);
     
-	if (!errors.empty()) {
-		std::cerr << "Could not produce .cpp file, following errors occurred:\n\n";
-		std::sort(errors.begin(), errors.end(), [](ParseError& a, ParseError& b){ return a.line < b.line; });
-		print_error_messages(std::cerr, errors, vecs);
-		return 1;
-	}
-
-	std::vector<std::string> net_watch;
-	bool valid;
-	std::tie(net_watch, valid) = nets_to_watch(to_watch, parsedFile);
-	if (!valid) {
-		std::cerr << "Invalid net watch list:\n";
-		for (const std::string& err : net_watch)
-			std::cerr << "\t" << err << "\n";
-		return 1;
+    if (!errors.empty()) {
+        std::cerr << "Could not produce .cpp file, following errors occurred:\n\n";
+        std::sort(errors.begin(), errors.end(), [](ParseError& a, ParseError& b){ return a.line < b.line; });
+        print_error_messages(std::cerr, errors, vecs);
+        return 1;
     }
 
-	fileout << generateHeaders(embed_lib)
-	        << "int main(int argc, char* argv[]){\n"
-	        << parsedFile.generateCode(modules, nets);
+    std::vector<std::string> net_watch;
+    bool valid;
+    std::tie(net_watch, valid) = nets_to_watch(to_watch, parsedFile);
+    if (!valid) {
+        std::cerr << "Invalid net watch list:\n";
+        for (const std::string& err : net_watch)
+            std::cerr << "\t" << err << "\n";
+        return 1;
+    }
+
+    fileout << generateHeaders(embed_lib)
+            << "int main(int argc, char* argv[]){\n"
+            << parsedFile.generateCode(modules, nets);
     fileout << generate_output(output_type, nets, net_watch)
             << generateSystemSteps(parsedFile.declarations, nets, net_watch, step_num)
             << tabs(1) << "return 0;\n" << "}\n";
                 
     if (!fileout.good()) {
-		std::cerr << "Cannot write to output file " << out_file << "!\n";
-		return 1;
-	}
+        std::cerr << "Cannot write to output file " << out_file << "!\n";
+        return 1;
+    }
 
-	return 0;
+    return 0;
 }

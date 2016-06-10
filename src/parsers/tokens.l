@@ -40,9 +40,9 @@
 extern int yyparse(StatementUnion&);
 
 StatementUnion parse_line(const std::string& in) {
-	YY_BUFFER_STATE s = yy_scan_string(in.c_str());
+    YY_BUFFER_STATE s = yy_scan_string(in.c_str());
     StatementUnion statement;
     yyparse(statement);
     yy_delete_buffer(s);
-	return statement;
+    return statement;
 }

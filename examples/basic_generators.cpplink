@@ -16,5 +16,5 @@ net 10.0 -> sinper
 
 ModuleSum<REAL> sum
 net sum.in1 <- a
-net sum.in2 <- b
+net sum.in2 <- c
 net sum.out -> out

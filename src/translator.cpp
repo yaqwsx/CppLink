@@ -8,21 +8,21 @@
 namespace cpplink { namespace translator {
 
 std::string ltrim(std::string s) {
-	auto end = std::find_if(s.begin(), s.end(),
+    auto end = std::find_if(s.begin(), s.end(),
         [] (char c) { return !std::isspace(c); });
-	s.erase(s.begin(), end);
-	return s;
+    s.erase(s.begin(), end);
+    return s;
 }
 
 std::string rtrim(std::string s) {
-	auto begin = std::find_if(s.rbegin(), s.rend(),
+    auto begin = std::find_if(s.rbegin(), s.rend(),
         [] (char c) { return !std::isspace(c); });
-	s.erase(begin.base(), s.end());
-	return s;
+    s.erase(begin.base(), s.end());
+    return s;
 }
 
 std::string trim(std::string s) {
-	return ltrim(rtrim(s));
+    return ltrim(rtrim(s));
 }
 
 std::string strip_comments(const std::string& s) {
@@ -47,52 +47,52 @@ parse_file(const std::vector<std::string>& file)
     for (const std::string line : file) {
         line_num++;
 
-	    std::string stripped_line = strip_comments(line);
+        std::string stripped_line = strip_comments(line);
         if (stripped_line.empty())
             continue;
-	    StatementUnion statement = parse_line(stripped_line);
+        StatementUnion statement = parse_line(stripped_line);
         
-	    if (statement.is<std::string>()) {
-		    errors.push_back({ statement.get<std::string>(), line_num });
-	    }
-	    else if (statement.is<ModuleDeclaration>()) {
-		    result.declarations.push_back(add_line_num(
-		        statement.get<ModuleDeclaration>(),
-			    line_num));
-	    }
-	    else if (statement.is<NetPinCommand>()) {
-		    result.net_pin.push_back(add_line_num(
-		        statement.get<NetPinCommand>(),
-			    line_num));
-	    }
-	    else if (statement.is<NetConstCommand>()) {
-		    result.net_const.push_back(add_line_num(
-		        statement.get<NetConstCommand>(),
-			    line_num));
-	    }
-	    else if (statement.is<BlackboxCommand>()) {
-		    if (result.blackbox_def) {
-			    errors.push_back({
+        if (statement.is<std::string>()) {
+            errors.push_back({ statement.get<std::string>(), line_num });
+        }
+        else if (statement.is<ModuleDeclaration>()) {
+            result.declarations.push_back(add_line_num(
+                statement.get<ModuleDeclaration>(),
+                line_num));
+        }
+        else if (statement.is<NetPinCommand>()) {
+            result.net_pin.push_back(add_line_num(
+                statement.get<NetPinCommand>(),
+                line_num));
+        }
+        else if (statement.is<NetConstCommand>()) {
+            result.net_const.push_back(add_line_num(
+                statement.get<NetConstCommand>(),
+                line_num));
+        }
+        else if (statement.is<BlackboxCommand>()) {
+            if (result.blackbox_def) {
+                errors.push_back({
                      "Redefinition of blackbox steps! See line "
                      + std::to_string(result.blackbox_def.value().line)
                      + " for previous declaration", line_num
                      });
-		    }
+            }
             else {
-	            result.blackbox_def = brick::types::Maybe<BlackboxCommand>::Just(
+                result.blackbox_def = brick::types::Maybe<BlackboxCommand>::Just(
                     add_line_num(statement.get<BlackboxCommand>(), line_num));
             }
         }
-	    else if (statement.is<IoPinDeclaration>()) {
-		    result.io_pins.push_back(add_line_num(
+        else if (statement.is<IoPinDeclaration>()) {
+            result.io_pins.push_back(add_line_num(
                 statement.get<IoPinDeclaration>(),
                 line_num));
-	    }
-	    else if (statement.is<GenericDeclaration>()) {
-		    result.generics.push_back(add_line_num(
+        }
+        else if (statement.is<GenericDeclaration>()) {
+            result.generics.push_back(add_line_num(
                 statement.get<GenericDeclaration>(),
                 line_num));
-	    }
+        }
         else {
             assert(false && "Unknown type in union!");
         }

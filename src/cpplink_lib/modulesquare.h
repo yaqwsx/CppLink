@@ -1,7 +1,7 @@
 #pragma once
 
 #ifndef _CPPLINK_EMBEDDED_CODE_
-    #include "modules.h"	  
+    #include "modules.h"      
 #endif // !_CPPLINK_EMBEDDED_CODE_
 
 /*
@@ -16,7 +16,7 @@
 namespace cpplink {
 
 struct ModuleSquare : Module {
-	
+    
     ModuleSquare() { //wiring
             n1.addInputPin(&sig.in);
             n1.setOutputPin(&sin.out);

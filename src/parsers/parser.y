@@ -11,13 +11,13 @@ static void yyerror(StatementUnion& u, const char *s) { u = std::string(s); }
     double                                   real_constant;
     bool                                     bool_constant;
     std::string*                             string;
-	std::vector<std::string>*                args;
+    std::vector<std::string>*                args;
     cpplink::translator::ModuleDeclaration*  module_dec;
     cpplink::translator::NetPinCommand*      net_pin;
     cpplink::translator::NetConstCommand*    net_const;
-	cpplink::translator::IoPinDeclaration*   io_pin;
-	cpplink::translator::BlackboxCommand*    blackbox;
-	cpplink::translator::GenericDeclaration* generic;
+    cpplink::translator::IoPinDeclaration*   io_pin;
+    cpplink::translator::BlackboxCommand*    blackbox;
+    cpplink::translator::GenericDeclaration* generic;
     int                                      token;
 }
 
@@ -63,9 +63,9 @@ static void yyerror(StatementUnion& u, const char *s) { u = std::string(s); }
 statement : declaration { root = StatementUnion(*$1); delete $1; }
           | net_pin     { root = StatementUnion(*$1); delete $1; }
           | net_const   { root = StatementUnion(*$1); delete $1; }
-		  | generic     { root = StatementUnion(*$1); delete $1; }
-		  | io_pin      { root = StatementUnion(*$1); delete $1; }
-		  | blackbox    { root = StatementUnion(*$1); delete $1; }
+          | generic     { root = StatementUnion(*$1); delete $1; }
+          | io_pin      { root = StatementUnion(*$1); delete $1; }
+          | blackbox    { root = StatementUnion(*$1); delete $1; }
           ;
 
 declaration : TNAME TNAME { $$ = new cpplink::translator::ModuleDeclaration{*$1, *$2, {}}; delete $1; delete $2; }
@@ -73,8 +73,8 @@ declaration : TNAME TNAME { $$ = new cpplink::translator::ModuleDeclaration{*$1,
             ;
 
 arguments : TNAME SEP arguments { $$ = $3; $$->push_back(*$1); delete $1; }
-		  | TNAME RPAR { $$ = new std::vector<std::string>({ *$1 }); delete $1; }
-		  ;
+          | TNAME RPAR { $$ = new std::vector<std::string>({ *$1 }); delete $1; }
+          ;
 
 net_pin : TNET TNAME TDOT TNAME dir TNAME { $$ = new cpplink::translator::NetPinCommand{*$6, *$2, *$4, $5 == TOUT}; delete $2; delete $4; delete $6; }
         ;
@@ -89,7 +89,7 @@ generic : TGENERIC TNAME { $$ = new cpplink::translator::GenericDeclaration{*$2}
 
 io_pin  : TIN_WORD TNAME TDOT TNAME  { $$ = new cpplink::translator::IoPinDeclaration{*$2, *$4, false}; delete $2; delete $4; }
         | TOUT_WORD TNAME TDOT TNAME { $$ = new cpplink::translator::IoPinDeclaration{*$2, *$4, true}; delete $2; delete $4; }
-		;
+        ;
 
 blackbox : TBLACKBOX int_constant { $$ = new cpplink::translator::BlackboxCommand{static_cast<int32_t>($2)}; }
          ;
