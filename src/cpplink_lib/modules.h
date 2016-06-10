@@ -69,8 +69,8 @@ struct Net : BaseNet {
         //output->value = Maybe<T>(); //nothing
     }
     
-	Maybe<T> getValue() {
-		return output->value;
+    Maybe<T> getValue() {
+        return output->value;
     }
 
 private:
@@ -81,7 +81,7 @@ private:
 
 struct Module {
     virtual void step() = 0;
-};
+}; 
 
 // ## Generators
 
@@ -89,15 +89,15 @@ template <typename T>
 struct ModuleRand : Module {
 
     void step() {
-        typedef typename std::conditional<std::is_same<T, int64_t>::value,
+        using GeneratorDistribution =  
+                typename std::conditional<std::is_same<T, int64_t>::value,
                 std::uniform_int_distribution<int>,
-                std::uniform_real_distribution<double>>::type Type;
+                std::uniform_real_distribution<double>>::type;
 
         T min_ = min.isValid()? min.getValue() : INT_MIN;
         T max_ = max.isValid()? max.getValue() : INT_MAX;
-        Type distr(min_, max_);
+        GeneratorDistribution distr(min_, max_);
 
-        for (size_t i=0; i<3; i++) distr(gen); //to further randomize, first 3 values are thrown away
         out = distr(gen);
     }
 
@@ -115,7 +115,6 @@ struct ModuleRand<bool> : Module {
     void step() {
         std::uniform_int_distribution<int> distr(0, 1);
 
-        for (size_t i=0; i<3; i++) distr(gen); //to further randomize, first 3 values are thrown away
         out = distr(gen);
     }
 

@@ -119,7 +119,7 @@ string generateSystemSteps(const std::vector<ModuleDeclaration>& modules,
 
 
 string generateNetDeclaration(string name, string type) {
-    return tabs(1) + "Net< " + type + " > " + name + ";\n";
+    return tabs(1) + "Net<" + type + "> " + name + ";\n";
 }
 
 string generateConstWiring(const NetPinCommand& n) {
@@ -131,12 +131,12 @@ string ModuleDeclaration::generateCode() const {
     size_t argsize = this->template_args.size();
 
     if (argsize) {
-        res += "< ";
+        res += "<";
         for(unsigned i=0; i<argsize; i++) {
             res += typeToStr.find(template_args[i])->second;
             if (i<argsize-1) res += ", ";
         }
-        res += " >";
+        res += ">";
     }
     return res + " " + name + ";\n";
 }
@@ -149,8 +149,35 @@ string NetPinCommand::generateCode() const {
     return res;
 }
 
+void checkForStrayNets(const NetPinCommand& n, std::map<string, string>& strayNets) {
+    auto strayNetIter = strayNets.find(n.net);
+    if (strayNetIter != strayNets.end() && n.is_out) {
+        strayNets.erase(strayNetIter);
+    }   
+}
+
+string netStrayNets(std::map<string, string>& strayNets) {
+    string res;
+    std::map<string, std::vector<string>> typeToNets {{"bool",{}},{"int",{}},{"real",{}}}; 
+    for (auto n : strayNets) {
+        typeToNets[n.second].push_back(n.first);
+    }
+    for (auto n : typeToNets) {
+        if (!n.second.empty()) {
+            string name = "blank" + n.first;
+            res += tabs(1) + "OutputPin<" + n.first + "> " + name + ";\n";
+            for (auto net : n.second) {
+                res += tabs(1) + net + ".setOutputPin(" + name + ");\n";
+            }
+        }
+        res += "\n";
+    }
+    return res;
+}
+
 string ParsedFile::generateCode(DeclarationsMap& modules, std::map<string, string>& nets) const {
         std::string res;
+        std::map<string, string> strayNets; //unset outputPin in net
 
         for (const auto& d : declarations) {
             res += d.generateCode();
@@ -158,20 +185,24 @@ string ParsedFile::generateCode(DeclarationsMap& modules, std::map<string, strin
         res += "\n";
 
         for (const auto& n : net_pin) {
-	        string net_type;
+            string net_type;
             if (constDeclarations.find(n.net) != constDeclarations.end()) {
                 res += generateConstWiring(n);
             } else {
                 if (nets.find(n.net) == nets.end()) {
-	                net_type = getPinType(modules, n.module, n.pin);
+                    net_type = getPinType(modules, n.module, n.pin);
                     res += generateNetDeclaration(n.net, net_type);
+                    strayNets.insert({ n.net, net_type });
                 }
                 res += n.generateCode();
-	            nets.insert({ n.net, net_type });
+                checkForStrayNets(n, strayNets); 
+                nets.insert({ n.net, net_type });
             }
             
         }
         res += "\n";
+        res += netStrayNets(strayNets) + "\n";
+
         return res;
 }
 
