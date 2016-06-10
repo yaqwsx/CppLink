@@ -79,9 +79,9 @@ code:
 
 # Building
 
-To build CppLink you need Bison, Flex, Cmake >= 2.8 and Clang >= 3.6. Make sure
-Clang is set as compiler for Cmake. Then run `mkdir build; cd build; cmake ..; make`
-to compile CppLink. CppLink translator binary is located in `build` directory.
+To build CppLink you need Bison, Flex, Cmake >= 2.8 and Clang >= 3.6. Run `mkdir
+build; cd build; cmake ..; make` to compile CppLink. CppLink translator binary
+is located in `build` directory.
 
 # Authors
 

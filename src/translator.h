@@ -7,16 +7,13 @@
 
 #include <brick-types.h>
 
-namespace std {
-// Define operator<< for types with dump method
+namespace cpplink { namespace translator {
+
 template <class T>
 auto operator<<(std::ostream& o, const T& t) -> decltype(t.dump(o), std::declval<std::ostream&>())  {
-	t.dump(o);
-	return o;
+    t.dump(o);
+    return o;
 }
-}
-
-namespace cpplink { namespace translator {
 
 enum DataType {Int = 0, Real = 1, Bool = 2, Template = 3}; 
 enum class Direction {In, Out};

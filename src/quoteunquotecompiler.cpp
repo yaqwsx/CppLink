@@ -65,7 +65,7 @@ string generateHeaders(bool embed) {
 string tabs(unsigned u) {
     string res;
     for (unsigned i=0; i<u; i++)
-        res += "\t";
+        res += "    ";
     return res;
 }
 
@@ -88,10 +88,10 @@ string generateSystemSteps(const std::vector<ModuleDeclaration>& modules,
 {
 	std::string res;
 	if (steps == -1)
-		res += tabs(1) + "for(long __cpplink_i = 0; true ; __cpplink_i++) {\n";
+		res += tabs(1) + "for(long _cpplink_i = 0; true ; _cpplink_i++) {\n";
 	else
-		res += tabs(1) + "for(long __cpplink_i = 0; "
-            "__cpplink_i != " + std::to_string(steps) + "; __cpplink_i++) {\n";
+		res += tabs(1) + "for(long _cpplink_i = 0; "
+            "_cpplink_i != " + std::to_string(steps) + "; _cpplink_i++) {\n";
 
 	res += tabs(2) + "// Propagate values through nets\n";
 	for (const auto& net : nets)
@@ -106,8 +106,8 @@ string generateSystemSteps(const std::vector<ModuleDeclaration>& modules,
 	if (!watched_nets.empty()) {
 		res += "\n";
 		res += tabs(2) + "// Output values in this step\n";
-		res += tabs(2) + "__cpplink_table.write_line(\n";
-		res += tabs(3) + "__cpplink_i";
+		res += tabs(2) + "_cpplink_table.write_line(\n";
+		res += tabs(3) + "_cpplink_i";
 		for (const std::string& net : watched_nets)
 			res += ",\n" + tabs(3) + net + ".getValue()";
 		res += "\n" + tabs(2) + ");\n";
@@ -265,7 +265,7 @@ std::string generate_output(std::string output_type, const std::map<std::string,
 		res += ",\n";
 		res += tabs(3) + "Maybe<" + nets.find(net)->second + ">";
     }
-	res += "\n" + tabs(2) + "> __cpplink_table (std::cout, {\"step\"";
+	res += "\n" + tabs(2) + "> _cpplink_table (std::cout, {\"step\"";
 	for (const std::string& net : watched) {
 		res += ",\n";
 		res += tabs(3) + '"' + net + '"';
@@ -349,8 +349,8 @@ int main(int argc, char* argv[]) {
 
 	fileout << generateHeaders(embed_lib)
 	        << "int main(int argc, char* argv[]){\n"
-	        << parsedFile.generateCode(modules, nets)
-            << generate_output(output_type, nets, net_watch)
+	        << parsedFile.generateCode(modules, nets);
+    fileout << generate_output(output_type, nets, net_watch)
             << generateSystemSteps(parsedFile.declarations, nets, net_watch, step_num)
             << tabs(1) << "return 0;\n" << "}\n";
                 

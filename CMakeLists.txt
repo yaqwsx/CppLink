@@ -5,6 +5,9 @@ project(CppLink CXX C)
 # Setup directories
 file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/parser)
 
+# Setup external libs
+execute_process(COMMAND "git" "submodule" "update" "--init")
+
 # Import packages
 find_package(BISON REQUIRED)
 find_package(FLEX REQUIRED)
