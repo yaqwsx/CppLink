@@ -13,8 +13,8 @@ files into C++ code that simulates the system described by the netlist file.
 # How to use it
 
 There are two ways to use CppLink. Either you can use the data-flow C++ library
-directly and write a C++ code using it, or you can describe your system's netlist
-in CppLink language and let CppLink perform the translation to C++ code.
+directly and write a C++ code using it, or you can describe your system's
+netlist in CppLink language and let CppLink perform the translation to C++ code.
 
 Consider the following simple example:
 
@@ -82,6 +82,25 @@ code:
 To build CppLink you need Bison, Flex, Cmake >= 2.8 and Clang >= 3.6. Run `mkdir
 build; cd build; cmake ..; make` to compile CppLink. CppLink translator binary
 is located in `build` directory.
+
+# Input language
+
+Input language is easy - there are only three types of commands; module
+instantiation, connect pin to net and connect constant value to net. Every
+command has to ben on separate line. When `#` appears, everything to the end of
+line is concidered as a comment.
+
+To instantiate module of `ModuleType` with name `InstanceName`, write
+`ModuleType InstanceName` or `ModuleType<Arguments> InstanceName` when the
+module features template arguments. For list of available module types and their
+arguments, see our documentation.
+
+Each module instance features several input and output pins, whose description
+can be found in documentation. To connect an output pin to a net, write `net
+module.pin -> NetName`, to connect an input pin, write `net module.pin <-
+NetName`. Also constants can be connected to a net insted of a output pin - e.g.
+`net 10.0 -> NetName`. There can be at most one output pin connected to a net.
+Number of input pins is unlimited.
 
 # Authors
 
