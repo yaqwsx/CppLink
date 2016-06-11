@@ -202,12 +202,9 @@ TEST_CASE("modules") {
         md.min.value = -2.5;
         md.max.value = 1000.99;
         md.step();
-        cout << md.out.value.value << '\n';
 
         ModuleRand<bool> mb;
         mb.step();
-        cout << boolalpha;
-        cout << mb.out.value.value << '\n';
     }
 
     SECTION("sin") {
@@ -372,8 +369,6 @@ TEST_CASE("modules") {
         s.in.value = -3;
         s.step();
         REQUIRE_INVALID(s.out.value);
-
-        cout << std::is_same<int, int32_t>::value << '\n';
     }
 
     SECTION("avg") {

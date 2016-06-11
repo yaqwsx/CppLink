@@ -87,8 +87,8 @@ is located in `build` directory.
 
 Input language is easy - there are only three types of commands; module
 instantiation, connect pin to net and connect constant value to net. Every
-command has to ben on separate line. When `#` appears, everything to the end of
-line is concidered as a comment.
+command has to be on a separate line. When `#` appears, everything to the end of
+line is considered as a comment.
 
 To instantiate module of `ModuleType` with name `InstanceName`, write
 `ModuleType InstanceName` or `ModuleType<Arguments> InstanceName` when the
@@ -98,7 +98,7 @@ arguments, see our documentation.
 Each module instance features several input and output pins, whose description
 can be found in documentation. To connect an output pin to a net, write `net
 module.pin -> NetName`, to connect an input pin, write `net module.pin <-
-NetName`. Also constants can be connected to a net insted of a output pin - e.g.
+NetName`. Also constants can be connected to a net instead of an output pin - e.g.
 `net 10.0 -> NetName`. There can be at most one output pin connected to a net.
 Number of input pins is unlimited.
 

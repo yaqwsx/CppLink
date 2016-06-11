@@ -158,20 +158,18 @@ void checkForStrayNets(const NetPinCommand& n, std::map<string, string>& strayNe
 
 string netStrayNets(std::map<string, string>& strayNets) {
     string res;
-    std::map<string, std::vector<string>> typeToNets {{"bool",{}},{"int",{}},{"real",{}}}; 
+    std::map<string, std::vector<string>> typeToNets;
     for (auto n : strayNets) {
         typeToNets[n.second].push_back(n.first);
     }
     for (auto n : typeToNets) {
-        if (!n.second.empty()) {
-            string name = "blank" + n.first;
-            res += tabs(1) + "OutputPin<" + n.first + "> " + name + ";\n";
-            for (auto net : n.second) {
-                res += tabs(1) + net + ".setOutputPin(" + name + ");\n";
-            }
+        string name = "blank" + n.first;
+        res += tabs(1) + "OutputPin<" + n.first + "> " + name + ";\n";
+        for (auto net : n.second) {
+            res += tabs(1) + net + ".setOutputPin(" + name + ");\n";
         }
-        res += "\n";
     }
+    res += "\n";
     return res;
 }
 
